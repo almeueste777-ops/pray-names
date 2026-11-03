@@ -11,7 +11,7 @@
   else root.REGULI = factory(root.NUME);
 })(typeof self !== 'undefined' ? self : this, function (NUME) {
 
-  const MAX_NUME_PE_FOAIE = 14;
+  const MAX_NUME_PE_FOAIE = 24;   // peste 10 nume foaia trece pe 2 coloane (foaie.js), deci încap 2 × 12
   const LUNI = { ian: 1, feb: 2, mar: 3, apr: 4, mai: 5, iun: 6, iul: 7, aug: 8, sep: 9, sept: 9, oct: 10, noi: 11, nov: 11, dec: 12 };
   const ROMANE = { i: 1, ii: 2, iii: 3, iv: 4, v: 5, vi: 6, vii: 7, viii: 8, ix: 9, x: 10, xi: 11, xii: 12 };
   const ZILE_IN_LUNA = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -179,10 +179,12 @@
     pagini.forEach((p, ip) => (p.sectiuni || []).forEach(s => {
       const nume = s.nume.filter(n => n.nume && !n.sters);
       if (!nume.length) return;
-      const bucati = Math.ceil(nume.length / max), pe = Math.ceil(nume.length / bucati);
-      for (let i = 0, k = 0; i < nume.length; i += pe, k++) {
-        foi.push({ categorie: s.categorie, nume: nume.slice(i, i + pe).map(n => n.nume), casa: !!s.casa && i + pe >= nume.length,
+      const bucati = Math.ceil(nume.length / max), baza = Math.floor(nume.length / bucati), rest = nume.length % bucati;
+      for (let i = 0, k = 0; k < bucati; k++) {
+        const pe = baza + (k < rest ? 1 : 0);   // echilibrat: 49 → 17+16+16
+        foi.push({ categorie: s.categorie, nume: nume.slice(i, i + pe).map(n => n.nume), casa: !!s.casa && k === bucati - 1,
           data: p.data, pagina: ip + 1, continuare: k > 0 });
+        i += pe;
       }
     }));
     return foi;

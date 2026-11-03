@@ -1,8 +1,8 @@
 // Service worker: aplicația merge și fără net după prima deschidere (citirea cu modelul cere net).
 // Fișierele proprii: rețea întâi, cache ca rezervă (deci o versiune nouă ajunge la prima deschidere cu net).
 // pdf.js de pe cdnjs: cache întâi (e fixat pe versiune).
-const CACHE = 'pray-names-v2';
-const PROPRII = ['./', './index.html', './style.css', './app.js', './ocr.js', './reguli.js', './nume.js', './manifest.webmanifest',
+const CACHE = 'pray-names-v3';
+const PROPRII = ['./', './index.html', './style.css', './app.js', './ocr.js', './reguli.js', './nume.js', './foaie.js', './manifest.webmanifest',
   './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png'];
 const CDN = ['https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs', 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs'];
 
@@ -24,7 +24,7 @@ self.addEventListener('fetch', e => {
       if (resp.ok) caches.open(CACHE).then(c => c.put(cheie, resp.clone()));
       return resp;
     }).catch(() => caches.match(cheie).then(r => r || caches.match('./index.html'))));
-  } else if (u.hostname === 'cdnjs.cloudflare.com') {
+  } else if (u.hostname === 'cdnjs.cloudflare.com' || u.hostname === 'fonts.googleapis.com' || u.hostname === 'fonts.gstatic.com') {
     e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).then(resp => { if (resp.ok) caches.open(CACHE).then(c => c.put(e.request, resp.clone())); return resp; })));
   }
 });

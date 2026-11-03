@@ -25,14 +25,41 @@ async function pozaSterge(id) { try { const d = await db(); d.transaction(DB.mag
 async function pozeGoleste() { try { const d = await db(); d.transaction(DB.magazin, 'readwrite').objectStore(DB.magazin).clear(); } catch {} }
 
 // ---------- setări ----------
-function incarcaSetari() { try { return Object.assign({ furnizor: 'gemini', cheie: '', model: '' }, JSON.parse(localStorage.getItem(CHEIE_SET) || '{}')); } catch { return { furnizor: 'gemini', cheie: '', model: '' }; } }
+function incarcaSetari() { try { return Object.assign({ furnizor: 'gemini', cheie: '', model: '', aspect: { ...FOAIE.IMPLICIT } }, JSON.parse(localStorage.getItem(CHEIE_SET) || '{}')); } catch { return { furnizor: 'gemini', cheie: '', model: '', aspect: { ...FOAIE.IMPLICIT } }; } }
 function salveazaSetari() { try { localStorage.setItem(CHEIE_SET, JSON.stringify(setari)); } catch {} }
+setari.aspect = Object.assign({ ...FOAIE.IMPLICIT }, setari.aspect || {});
+(function umpleModele() {
+  const sel = $('#set-model');
+  for (const m of OCR.MODELE_GEMINI) { const o = document.createElement('option'); o.value = m.id; o.textContent = `${m.nume}${m.peZi ? ` (${m.peZi} pagini/zi)` : ' (cotă necunoscută)'}`; sel.appendChild(o); }
+  const f = $('#asp-font'); for (const x of FOAIE.FONTURI) { const o = document.createElement('option'); o.value = x.nume; o.textContent = x.nume; f.appendChild(o); }
+})();
 $('#btn-setari').onclick = () => { const d = $('#setari'); d.returnValue = ''; $('#set-furnizor').value = setari.furnizor; $('#set-cheie').value = setari.cheie; $('#set-model').value = setari.model; d.showModal(); };
 $('#setari').addEventListener('close', () => {
   if ($('#setari').returnValue !== 'ok') return;
   setari.furnizor = $('#set-furnizor').value; setari.cheie = $('#set-cheie').value.trim(); setari.model = $('#set-model').value.trim();
   salveazaSetari(); actualizeazaButoane();
 });
+// aspectul foii (pasul 3)
+for (const [id, cheie] of [['#asp-font', 'font'], ['#asp-marime', 'marime'], ['#asp-chenar', 'chenar'], ['#asp-culoare', 'culoare']]) {
+  const el = $(id); el.value = setari.aspect[cheie];
+  el.onchange = () => { setari.aspect[cheie] = el.value; salveazaSetari(); deseneazaFoi(); };
+}
+
+// ---------- cota zilnică Gemini ----------
+function deseneazaCota() {
+  const el = $('#cota'); if (setari.furnizor !== 'gemini') { el.textContent = 'Claude: fără cotă gratuită, se plătește pe pagină.'; el.className = 'cota'; return; }
+  const c = OCR.cota(setari);
+  const necitite = lot.pagini.filter(p => p.stare !== 'citit' && p.img).length;
+  let cls = 'cota', text;
+  if (c.toateEpuizate) { cls += ' gata'; text = `Gemini nu mai primește pagini azi. Se reface la ${c.reset}.`; }
+  else if (c.peZi == null) text = `<b>${esc(c.nume)}</b> · azi ${c.folosite} pagini citite · cotă necunoscută`;
+  else {
+    const proc = Math.min(100, Math.round(100 * c.folosite / c.peZi));
+    if (c.ramase <= 10) cls += ' putin';
+    text = `<b>${esc(c.nume)}</b> · azi ${c.folosite} din ${c.peZi} pagini <span class="bara-cota"><i style="width:${proc}%"></i></span> mai ai voie <b>${c.ramase}</b>` + (necitite > c.ramase ? ` · ai ${necitite} de citit: restul mâine după ${c.reset}` : '');
+  }
+  el.className = cls; el.innerHTML = text;
+}
 
 // ---------- pași ----------
 document.querySelectorAll('.pasi button').forEach(b => b.onclick = () => aratăPas(+b.dataset.pas));
@@ -118,27 +145,38 @@ function actualizeazaButoane(stergeMesaj = true) {
   $('#btn-citeste').textContent = necitite && necitite < lot.pagini.length ? `🔍 Citește paginile rămase (${necitite})` : '🔍 Citește toate paginile';
   if (lot.pagini.length && !setari.cheie) $('#progres').textContent = 'Pune cheia API în ⚙ ca să poți citi.';
   else if (stergeMesaj) $('#progres').textContent = '';
+  deseneazaCota();
 }
 $('#btn-goleste').onclick = () => { if (confirm('Ștergi tot lotul încărcat?')) { lot = { pagini: [] }; pozeGoleste(); salveazaLot(); deseneazaMiniaturi(); actualizeazaButoane(); } };
 
 // ---------- citirea ----------
 $('#btn-citeste').onclick = async () => {
-  $('#btn-citeste').disabled = true;
   const deCitit = lot.pagini.map((p, i) => [p, i]).filter(([p]) => p.stare !== 'citit' && p.img);
-  let n = 0;
+  if (setari.furnizor === 'gemini') {
+    const c = OCR.cota(setari);
+    if (c.toateEpuizate) { alert(`Gemini nu mai primește pagini azi. Cota se reface la ${c.reset}.`); return; }
+    if (c.ramase != null && deCitit.length > c.ramase && !confirm(`Azi mai ai voie ${c.ramase} pagini pe ${c.nume}, dar sunt ${deCitit.length} de citit. Citesc câte se poate, restul rămân pentru mâine după ${c.reset}. Continui?`)) return;
+  }
+  $('#btn-citeste').disabled = true;
+  let n = 0, oprit = false;
   for (const [p, i] of deCitit) {
     p.stare = 'citire'; deseneazaMiniaturi();
     $('#progres').textContent = `Se citește pagina ${i + 1} (${++n}/${deCitit.length})…`;
     try {
       const r = await OCR.citestePagina(p.img, setari);
       aplicaCitirea(p, r); p.stare = 'citit'; p.eroare = '';
-    } catch (e) { p.stare = 'eroare'; p.eroare = e.message; console.error(e); }
-    salveazaLot(); deseneazaMiniaturi();
+    } catch (e) {
+      p.stare = e.cotaZi ? 'necitit' : 'eroare'; p.eroare = e.cotaZi ? '' : e.message; console.error(e);
+      if (e.cotaZi) { oprit = true; salveazaLot(); deseneazaMiniaturi(); break; }
+    }
+    salveazaLot(); deseneazaMiniaturi(); deseneazaCota();
   }
   const erori = lot.pagini.filter(p => p.stare === 'eroare').length;
-  $('#progres').textContent = erori ? `Gata, dar ${erori} pagini cu eroare (apasă din nou ca să reîncerci).` : 'Gata. Treci la pasul 2 · Verifică.';
+  const ramase = lot.pagini.filter(p => p.stare === 'necitit' && p.img).length;
+  $('#progres').textContent = oprit ? `Gemini și-a terminat cota pe azi; ${ramase} pagini rămân pentru mâine după 10:00 (ora României).`
+    : erori ? `Gata, dar ${erori} pagini cu eroare (apasă din nou ca să reîncerci).` : 'Gata. Treci la pasul 2 · Verifică.';
   actualizeazaButoane(false);
-  if (!erori) aratăPas(2);
+  if (!erori && !oprit) aratăPas(2);
 };
 function aplicaCitirea(p, r) {
   p.ocr = r;
@@ -219,29 +257,19 @@ function deseneazaFoi() {
   $('#rezumat-foi').textContent = `${foi.length} foi A6 pe ${a4uri.length} coli A4` + (faraData ? ` — ATENȚIE: ${faraData} foi fără dată (pasul 2)` : '');
   const cont = $('#foi'); cont.innerHTML = '';
   const taiere = $('#linii-taiere').checked;
+  FOAIE.incarcaFont(setari.aspect.font);
   a4uri.forEach(grup => {
     const a4 = document.createElement('div'); a4.className = 'a4' + (taiere ? ' taiere' : '');
     for (let k = 0; k < 4; k++) {
       const f = grup[k]; const d = document.createElement('div'); d.className = 'a6';
-      if (f) {
-        d.innerHTML = `<div class="titlu ${f.categorie}">${f.categorie === 'adormiti' ? 'ADORMIȚI' : 'VII'}</div>
-          ${f.continuare ? '<div class="cont">(continuare)</div>' : ''}
-          <ol class="lista m20">${f.nume.map(n => `<li>${esc(n)}</li>`).join('')}</ol>
-          ${f.casa ? '<div class="casa">cu toată casa lor</div>' : ''}
-          <div class="data">${esc(f.data || '')}</div>`;
-      }
+      if (f) d.innerHTML = FOAIE.html(f, setari.aspect);
       a4.appendChild(d);
     }
     cont.appendChild(a4);
   });
-  // micșorează litera până încape totul în A6 (numele lungi se împachetează, deci măsurăm, nu numărăm)
-  for (const a6 of cont.querySelectorAll('.a6')) {
-    const l = a6.querySelector('.lista'); if (!l) continue;
-    for (const m of ['m20', 'm17', 'm14', 'm12', 'm11', 'm10']) {
-      l.className = 'lista ' + m;
-      if (a6.scrollHeight <= a6.clientHeight + 1) break;
-    }
-  }
+  const potriveste = () => { for (const a6 of cont.querySelectorAll('.a6')) FOAIE.potriveste(a6, setari.aspect); };
+  potriveste();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(potriveste);   // după ce vine fontul de pe net, măsurăm din nou
 }
 $('#btn-tipareste').onclick = () => window.print();
 $('#linii-taiere').onchange = deseneazaFoi;

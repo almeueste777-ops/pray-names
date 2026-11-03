@@ -1,6 +1,7 @@
 # STARE – Pray Names
 
-**Versiune:** 0.2 (3.11.2026) – după auditul Sonnet (2 blocante + 9 importante reparate). Live: https://almeueste777-ops.github.io/pray-names/ . Neprobată încă de Otilia cu mausul și fără cheie API reală.
+**Versiune:** 0.3 (4.11.2026) – foaia nouă (chenar SVG, 2 coloane peste 10 nume, data sus-dreapta, font/mărime/chenar/culori la alegere în pasul 3), design iOS (sticlă, auriu pe cerneală), contor de cotă Gemini pe zi (cotele reale din contul ei: Flash Lite 500/zi, Flash 20/zi; reset 10:00 ora României), modelul implicit Gemini 3.5 Flash Lite (la fel de bun la nume ca Flash pe cele 9 pagini, mai slab la data albastră).
+**Versiune veche:** 0.2 (3.11.2026) – după auditul Sonnet (2 blocante + 9 importante reparate). Live: https://almeueste777-ops.github.io/pray-names/ . Neprobată încă de Otilia cu mausul și fără cheie API reală.
 
 ## Ce merge (verificat)
 - Regulile de tipar: 63 de probe (rândurile reale din 9 pomelnice + cazurile auditului: titluri Pr./monahia, „și", cruce pe nume, „cu fii" singur, date „nov 5"/„25 de oct"), toate verzi (`node test/reguli.test.js`).

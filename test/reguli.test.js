@@ -54,8 +54,8 @@ eq([sect.categorie, sect.nume.map(n => n.nume)], ['adormiti', ['Ion ctna', 'Vict
 const foi = R.construiesteFoi([{ data: '23.11.2026', sectiuni: [
   R.proceseazaSectiune({ titlu: 'Vii', linii: ['Maria-Simona', 'Gheorghe-Adrian', 'Constantin'] }), sect] }]);
 eq(foi.map(f => [f.categorie, f.nume.length, f.data]), [['vii', 3, '23.11.2026'], ['adormiti', 2, '23.11.2026']], 'două foi dintr-o pagină');
-const multe = R.construiesteFoi([{ data: 'x', sectiuni: [{ categorie: 'vii', casa: true, nume: Array.from({ length: 20 }, (_, i) => ({ nume: 'N' + i })) }] }]);
-eq(multe.map(f => [f.nume.length, f.continuare, f.casa]), [[10, false, false], [10, true, true]], 'continuare');
+const multe = R.construiesteFoi([{ data: 'x', sectiuni: [{ categorie: 'vii', casa: true, nume: Array.from({ length: 40 }, (_, i) => ({ nume: 'N' + i })) }] }]);
+eq(multe.map(f => [f.nume.length, f.continuare, f.casa]), [[20, false, false], [20, true, true]], 'continuare');
 eq(R.grupeazaA4(Array(9).fill({})).map(a => a.length), [4, 4, 1], 'A4 câte 4');
 
 // --- cazurile din auditul Sonnet (3.11.2026) ---
@@ -85,8 +85,9 @@ eq(R.parseazaData('25 de octombrie', azi), '25.10.2026', 'cu „de"');
 eq(R.parseazaData('20oct', azi), '20.10.2026', 'lipit');
 eq(R.parseazaData('31.02', azi), null, '31 februarie nu există');
 eq(R.parseazaData('05.11.2026', azi), '05.11.2026', 'deja normalizată');
-const ech = R.construiesteFoi([{ data: 'x', sectiuni: [{ categorie: 'vii', casa: true, nume: Array.from({ length: 17 }, (_, i) => ({ nume: 'N' + i })) }] }]);
-eq(ech.map(f => [f.nume.length, f.continuare, f.casa]), [[9, false, false], [8, true, true]], 'continuare echilibrată 9+8');
+const ech = R.construiesteFoi([{ data: 'x', sectiuni: [{ categorie: 'vii', casa: true, nume: Array.from({ length: 49 }, (_, i) => ({ nume: 'N' + i })) }] }]);
+eq(ech.map(f => [f.nume.length, f.continuare, f.casa]), [[17, false, false], [16, true, false], [16, true, true]], 'continuare echilibrată 17+16+16');
+eq(R.construiesteFoi([{ data: 'x', sectiuni: [{ categorie: 'vii', nume: Array.from({ length: 16 }, (_, i) => ({ nume: 'N' + i })) }] }]).length, 1, '16 nume = o singură foaie (2 coloane)');
 // --- hotărârea ei 3.11.2026: Ana-Maria e un nume întreg; Roxana Gabriela / Marcela Mihaela = doar primul ---
 eq(L('Ana-Maria'), 'Ana-Maria', 'Ana-Maria întreg');
 eq(L('Ana Maria'), 'Ana-Maria', 'Ana Maria cu spațiu');
