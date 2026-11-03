@@ -197,7 +197,7 @@
     return foi;
   }
 
-  function grupeazaA4(foi) { const a4 = []; for (let i = 0; i < foi.length; i += 4) a4.push(foi.slice(i, i + 4)); return a4; }
+  function grupeazaA4(foi, peCoala) { peCoala = peCoala || 4; const a4 = []; for (let i = 0; i < foi.length; i += peCoala) a4.push(foi.slice(i, i + peCoala)); return a4; }
 
   return { dataTiparirii, proceseazaLinie, proceseazaSectiune, proceseazaSectiuni, categorieDinTitlu, parseazaData, construiesteFoi, grupeazaA4, corecteazaNume, MAX_NUME_PE_FOAIE };
 });

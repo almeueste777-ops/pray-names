@@ -40,7 +40,7 @@ $('#setari').addEventListener('close', () => {
   salveazaSetari(); actualizeazaButoane();
 });
 // aspectul foii (pasul 3)
-for (const [id, cheie] of [['#asp-font', 'font'], ['#asp-chenar', 'chenar'], ['#asp-culoare', 'culoare']]) {
+for (const [id, cheie] of [['#asp-font', 'font'], ['#asp-chenar', 'chenar'], ['#asp-culoare', 'culoare'], ['#asp-pe-coala', 'peCoala']]) {
   const el = $(id); el.value = setari.aspect[cheie];
   el.onchange = () => { setari.aspect[cheie] = el.value; salveazaSetari(); deseneazaFoi(); };
 }
@@ -261,17 +261,19 @@ $('#btn-data-toate').onclick = () => {
 
 // ---------- pasul 3: foile ----------
 function deseneazaFoi() {
-  const foi = REGULI.construiesteFoi(lot.pagini);
-  const a4uri = REGULI.grupeazaA4(foi);
+  const az = FOAIE.asezare(setari.aspect);
+  const foi = REGULI.construiesteFoi(lot.pagini, az.maxNume);
+  const a4uri = REGULI.grupeazaA4(foi, az.coloane * az.randuri);
   const automate = foi.filter(f => f.dataAutomata).length;
-  $('#rezumat-foi').textContent = `${foi.length} foi A6 pe ${a4uri.length} coli A4` + (automate ? ` · ${automate} foi fără dată au primit ${REGULI.dataTiparirii()} (azi + 7 zile)` : '');
+  $('#rezumat-foi').textContent = `${foi.length} pomelnice pe ${a4uri.length} coli A4 (câte ${az.coloane * az.randuri})` + (automate ? ` · ${automate} foi fără dată au primit ${REGULI.dataTiparirii()} (azi + 7 zile)` : '');
   const cont = $('#foi'); cont.innerHTML = '';
   const taiere = $('#linii-taiere').checked;
   FOAIE.incarcaFont(setari.aspect.font);
   a4uri.forEach(grup => {
-    const a4 = document.createElement('div'); a4.className = 'a4' + (taiere ? ' taiere' : '');
-    for (let k = 0; k < 4; k++) {
-      const f = grup[k]; const d = document.createElement('div'); d.className = 'a6';
+    const a4 = document.createElement('div'); a4.className = 'a4 pe' + (az.coloane * az.randuri) + (taiere ? ' taiere' : '');
+    a4.style.gridTemplateColumns = `repeat(${az.coloane}, ${az.W}mm)`; a4.style.gridTemplateRows = `repeat(${az.randuri}, ${az.H}mm)`;
+    for (let k = 0; k < az.coloane * az.randuri; k++) {
+      const f = grup[k]; const d = document.createElement('div'); d.className = 'a6'; d.style.width = az.W + 'mm'; d.style.height = az.H + 'mm';
       if (f) d.innerHTML = FOAIE.html(f, setari.aspect);
       a4.appendChild(d);
     }
@@ -307,6 +309,7 @@ async function incarcaProba() {
     document.body.dataset.pdfGata = String(lot.pagini.length); return true;
   }
   if (!proba || !local || !/^probe\/[\w.-]+\.json$/.test(proba)) return false;
+  if (u.get('peCoala')) setari.aspect.peCoala = +u.get('peCoala');   // doar la probă locală
   const pag = await (await fetch(proba)).json();
   lot = { pagini: pag.map(x => { const p = { id: idNou(), img: x.img, sursa: x.sursa, stare: 'citit', data: null, sectiuni: [], observatii: '' }; aplicaCitirea(p, x.raspuns); return p; }) };
   aratăPas(+(u.get('pas') || 2)); return true;

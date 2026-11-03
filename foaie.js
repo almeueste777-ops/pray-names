@@ -16,7 +16,14 @@
     { nume: 'Georgia', google: null, fel: 'serif' },
   ];
   const CHENARE = ['clasic', 'simplu', 'fara'];
-  const IMPLICIT = { font: 'EB Garamond', chenar: 'clasic', marime: 'auto', culoare: 'verde-auriu' };
+  const IMPLICIT = { font: 'EB Garamond', chenar: 'clasic', marime: 'auto', culoare: 'verde-auriu', peCoala: 4 };
+  // Așezarea pe coala A4 (210 × 297 mm): 4 = 2×2 (A6, 105×148,25), 6 = 2×3 (105×99), 8 = 2×4 (105×74,25).
+  const ASEZARI = {
+    4: { coloane: 2, randuri: 2, W: 105, H: 148.25, maxNume: 24, pragColoane: 10 },
+    6: { coloane: 2, randuri: 3, W: 105, H: 99, maxNume: 16, pragColoane: 8 },
+    8: { coloane: 2, randuri: 4, W: 105, H: 74.25, maxNume: 12, pragColoane: 6 },
+  };
+  function asezare(aspect) { return ASEZARI[+(aspect && aspect.peCoala)] || ASEZARI[4]; }
   const PALETE = {
     'verde-auriu': { a: '#6f8a4f', b: '#c9a227', c: '#1f4e9a' },
     'auriu': { a: '#b8962e', b: '#d9bd5c', c: '#8a6d1c' },
@@ -34,8 +41,8 @@
 
   // Chenar în mm, pe viewBox 0 0 105 148.25. E o RAMĂ pe marginea foii (hotărârea ei 4.11): ornamentele stau pe bandă
   // (între cele două linii, 4–8 mm de la margine), interiorul rămâne curat pentru nume.
-  function chenarClasic(p) {
-    const W = 105, H = 148.25, m = 4, g = 2.2;   // margine exterioară, lățimea benzii dintre linii
+  function chenarClasic(p, W, H) {
+    const m = 4, g = 2.2;   // margine exterioară, lățimea benzii dintre linii
     const x1 = m, y1 = m, x2 = W - m, y2 = H - m, c = 9;   // c = raza colțului
     // colț: arc dublu + volută mică ce stă în banda colțului + frunză + diamant albastru, totul în ≤ 9 mm de margine
     const colt = (x, y, sx, sy) => `
@@ -63,30 +70,30 @@
       ${fleuron(W / 2, y1 + g / 2, 0)}${fleuron(W / 2, y2 - g / 2, 0)}${fleuron(x1 + g / 2, H / 2, 90)}${fleuron(x2 - g / 2, H / 2, 90)}
     </svg>`;
   }
-  function chenarSimplu(p) {
-    const W = 105, H = 148.25, m = 4;
+  function chenarSimplu(p, W, H) {
+    const m = 4;
     return `<svg class="chenar" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" aria-hidden="true">
       <rect x="${m}" y="${m}" width="${W - 2 * m}" height="${H - 2 * m}" fill="none" stroke="${p.a}" stroke-width=".5"/>
       <rect x="${m + 1.4}" y="${m + 1.4}" width="${W - 2 * m - 2.8}" height="${H - 2 * m - 2.8}" fill="none" stroke="${p.b}" stroke-width=".3"/>
     </svg>`;
   }
   function chenar(aspect) {
-    const p = PALETE[aspect.culoare] || PALETE['verde-auriu'];
-    return aspect.chenar === 'fara' ? '' : aspect.chenar === 'simplu' ? chenarSimplu(p) : chenarClasic(p);
+    const p = PALETE[aspect.culoare] || PALETE['verde-auriu'], a = asezare(aspect);
+    return aspect.chenar === 'fara' ? '' : aspect.chenar === 'simplu' ? chenarSimplu(p, a.W, a.H) : chenarClasic(p, a.W, a.H);
   }
 
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   // Împarte numele pe coloane: ≤ 10 → una; altfel două, umplute de sus în jos (prima coloană ia surplusul).
-  function coloane(nume) {
-    if (nume.length <= 10) return [nume];
+  function coloane(nume, prag) {
+    if (nume.length <= (prag || 10)) return [nume];
     const n1 = Math.ceil(nume.length / 2);
     return [nume.slice(0, n1), nume.slice(n1)];
   }
 
   // HTML-ul unei foi A6. f = {categorie, nume[], casa, data, continuare}
   function html(f, aspect) {
-    const col = coloane(f.nume);
+    const col = coloane(f.nume, asezare(aspect).pragColoane);
     const fam = FONTURI.find(x => x.nume === aspect.font) || FONTURI[0];
     const jos = [f.ctna ? 'ctna' : '', f.casa ? 'cu toată casa lor' : ''].filter(Boolean);
     return `${chenar(aspect)}
@@ -106,11 +113,13 @@
     if (aspect.marime !== 'auto') { n.className = 'nume col' + n.querySelectorAll('ul').length; n.style.fontSize = (+aspect.marime || 16) + 'pt'; return; }
     n.style.fontSize = '';
     const foaie = a6.querySelector('.foaie');
+    // .nume e flex:1 cu min-height:0, deci foaia nu „crește"; trebuie măsurat și blocul de nume
+    const incape = () => n.scrollHeight <= n.clientHeight + 1 && n.scrollWidth <= n.clientWidth + 1 && foaie.scrollHeight <= foaie.clientHeight + 1;
     for (const m of trepte) {
       n.className = 'nume col' + n.querySelectorAll('ul').length + ' ' + m;
-      if (foaie.scrollHeight <= foaie.clientHeight + 1) break;
+      if (incape()) break;
     }
   }
 
-  root.FOAIE = { FONTURI, CHENARE, PALETE, IMPLICIT, incarcaFont, html, potriveste, coloane };
+  root.FOAIE = { FONTURI, CHENARE, PALETE, IMPLICIT, ASEZARI, asezare, incarcaFont, html, potriveste, coloane };
 })(window);

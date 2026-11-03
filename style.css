@@ -96,12 +96,15 @@ dialog input, dialog select { width: 100%; margin-top: 6px; }
 .a4 { width: 210mm; height: 296.5mm; background: #fff; color: #000; display: grid; grid-template-columns: 105mm 105mm; grid-template-rows: 148.25mm 148.25mm; margin: 0 auto 12mm; box-shadow: 0 20px 50px rgba(15,26,46,.25); page-break-after: always; break-after: page; border-radius: 2px; }
 .a4:last-child { page-break-after: auto; break-after: auto; }
 .a6 { position: relative; width: 105mm; height: 148.25mm; overflow: hidden; }
-.taiere .a6:nth-child(1), .taiere .a6:nth-child(3) { border-right: .4mm dashed #9a9a9a; }
-.taiere .a6:nth-child(1), .taiere .a6:nth-child(2) { border-bottom: .4mm dashed #9a9a9a; }
+.taiere .a6:nth-child(odd) { border-right: .4mm dashed #9a9a9a; }
+.taiere.pe4 .a6:nth-child(-n+2), .taiere.pe6 .a6:nth-child(-n+4), .taiere.pe8 .a6:nth-child(-n+6) { border-bottom: .4mm dashed #9a9a9a; }
 .a6 .chenar { position: absolute; inset: 0; width: 100%; height: 100%; }
-.a6 .foaie { position: absolute; inset: 0; padding: 9mm 10mm 9mm; display: flex; flex-direction: column; overflow: hidden; }
+.a6 .foaie { position: absolute; inset: 0; padding: 9mm 10mm 8mm; display: flex; flex-direction: column; overflow: hidden; }
 /* titlul e TITLU: centrat, mare; data stă într-o casetă gri deschis, sus-dreapta, cu cifre de tabel (toate la fel de late) */
 .a6 .titlu { text-align: center; font-size: 19pt; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; margin: 6.5mm 0 3mm; }
+.pe6 .a6 .titlu, .pe8 .a6 .titlu { font-size: 14pt; margin: 5.5mm 0 2mm; }
+.pe8 .a6 .data { font-size: 9pt; top: 7mm; }
+.pe6 .a6 .jos, .pe8 .a6 .jos { font-size: 10pt; margin-top: 1.5mm; }
 .a6 .data { position: absolute; top: 8.5mm; right: 9mm; font: 600 10.5pt/1 "Atkinson Hyperlegible", "Inter", -apple-system, "Segoe UI", system-ui, sans-serif; font-variant-numeric: tabular-nums; letter-spacing: .06em; color: #222; background: #f1f1f1; border: .25mm solid #d6d6d6; border-radius: 1.3mm; padding: 1.4mm 2.4mm; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .a6 .cont { font-size: 9pt; opacity: .7; text-align: center; margin-top: -2mm; margin-bottom: 1mm; }
 .a6 .jos { text-align: center; font-size: 12pt; font-weight: 600; letter-spacing: .04em; margin-top: 2.5mm; }

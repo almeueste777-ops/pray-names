@@ -60,9 +60,10 @@
 
 <!-- PASUL 3 -->
 <section id="pas-3" class="pas ascuns">
-  <div class="caseta-ghid">💡 Mai jos vezi colile A4 exact cum ies la imprimantă: 4 pomelnice A6 pe fiecare, pe o singură față. <b>Fontul, mărimea și chenarul</b> le alegi din bara de mai jos (se țin minte). Apasă <b>Tipărește</b>, alege imprimanta sau „Salvează ca PDF", hârtie A4, margini „Niciuna", scară 100%. Taie apoi pe liniile punctate.</div>
+  <div class="caseta-ghid">💡 Mai jos vezi colile A4 exact cum ies la imprimantă: 4, 6 sau 8 pomelnice pe fiecare (alegi din <b>Pe coală</b>), pe o singură față. <b>Fontul, mărimea și chenarul</b> le alegi din bara de mai jos (se țin minte). Apasă <b>Tipărește</b>, alege imprimanta sau „Salvează ca PDF", hârtie A4, margini „Niciuna", scară 100%. Taie apoi pe liniile punctate.</div>
   <div class="rand-actiuni card subtire aspect">
     <button id="btn-tipareste" class="mare principal">Tipărește</button>
+    <label>Pe coală <select id="asp-pe-coala"><option value="4">4 (A6, 2×2)</option><option value="6">6 (2×3)</option><option value="8">8 (2×4)</option></select></label>
     <label>Font <select id="asp-font"></select></label>
     <label>Mărime <input type="number" id="asp-marime" min="8" max="48" step="0.5" style="width:5.5em"> pt</label>
     <label><input type="checkbox" id="asp-auto"> automată (cât încape)</label>
