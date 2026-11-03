@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pray Names</title>
+<meta name="description" content="Pomelnice scrise de mână → foi A6 de tipar, 4 pe o A4, cu data.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#4a3728">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="bara">
+  <h1>✝ Pray Names</h1>
+  <nav class="pasi">
+    <button data-pas="1" class="activ">1 · Încarcă</button>
+    <button data-pas="2">2 · Verifică</button>
+    <button data-pas="3">3 · Tipărește</button>
+  </nav>
+  <button id="btn-setari" title="Setări">⚙</button>
+</header>
+
+<main>
+<!-- PASUL 1 -->
+<section id="pas-1" class="pas">
+  <div class="caseta-ghid">💡 Scanează pomelnicele (de ex. cu CamScanner) într‑un singur PDF sau în poze, apoi apasă <b>Alege fișierele</b>. Fiecare pagină scanată = un pomelnic. După încărcare apasă <b>Citește toate paginile</b>: aplicația trimite fiecare pagină la modelul ales în ⚙ și transformă scrisul de mână în text.</div>
+  <div id="zona-incarcare" class="zona-incarcare">
+    <input type="file" id="fisiere" accept="application/pdf,image/*" multiple hidden>
+    <button id="btn-alege" class="mare">📂 Alege fișierele (PDF sau poze)</button>
+    <p>sau trage fișierele aici</p>
+  </div>
+  <div class="rand-actiuni">
+    <button id="btn-citeste" class="mare principal" disabled>🔍 Citește toate paginile</button>
+    <button id="btn-goleste" class="secundar">🗑 Golește lotul</button>
+    <span id="progres"></span>
+  </div>
+  <div id="miniaturi" class="miniaturi"></div>
+</section>
+
+<!-- PASUL 2 -->
+<section id="pas-2" class="pas ascuns">
+  <div class="caseta-ghid">💡 Compară fiecare poză cu textul citit. Numele <mark class="nesigur">galbene</mark> sunt cele la care modelul sau dicționarul au ezitat (sub ele scrie ce era în original). Corectează direct în căsuțe, șterge cu ✕, adaugă cu +. <b>Categoria</b> (Vii / Adormiți) și <b>data</b> se pot schimba la fiecare pagină. Când totul e bun, treci la pasul 3.</div>
+  <div class="rand-actiuni">
+    <label>Data pentru toate paginile fără dată: <input type="text" id="data-implicita" placeholder="zz.ll.aaaa" size="10"></label>
+    <button id="btn-data-toate" class="secundar">Pune data la toate</button>
+  </div>
+  <div id="verificare"></div>
+</section>
+
+<!-- PASUL 3 -->
+<section id="pas-3" class="pas ascuns">
+  <div class="caseta-ghid">💡 Mai jos vezi foile A4 exact cum ies la imprimantă: 4 pomelnice A6 pe fiecare, pe o singură față. Apasă <b>Tipărește</b>, alege imprimanta sau „Salvează ca PDF", hârtie A4, margini „Niciuna", scară 100%. Taie apoi foile pe liniile punctate.</div>
+  <div class="rand-actiuni">
+    <button id="btn-tipareste" class="mare principal">🖨 Tipărește</button>
+    <label><input type="checkbox" id="linii-taiere" checked> linii de tăiere</label>
+    <span id="rezumat-foi"></span>
+  </div>
+  <div id="foi"></div>
+</section>
+</main>
+
+<!-- SETĂRI -->
+<dialog id="setari">
+  <form method="dialog">
+    <h2>Setări</h2>
+    <label>Model de citire
+      <select id="set-furnizor">
+        <option value="gemini">Google Gemini (gratuit, cu limită zilnică)</option>
+        <option value="claude">Anthropic Claude (plătit, pe pagină)</option>
+      </select>
+    </label>
+    <label>Cheia API <input type="password" id="set-cheie" autocomplete="off" placeholder="lipește cheia aici"></label>
+    <label>Numele modelului <input type="text" id="set-model" placeholder="gol = implicit"></label>
+    <p class="mic">Cheia rămâne doar în acest browser (localStorage). Pozele pleacă la furnizorul ales ca să fie citite.</p>
+    <div class="rand-actiuni"><button value="ok" class="principal">Salvează</button><button value="cancel" class="secundar">Renunță</button></div>
+  </form>
+</dialog>
+
+<dialog id="lupa"><img id="lupa-img" alt=""><form method="dialog"><button class="secundar">Închide</button></form></dialog>
+
+<script src="nume.js"></script>
+<script src="reguli.js"></script>
+<script src="ocr.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>

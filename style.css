@@ -1,0 +1,75 @@
+:root {
+  --fundal: #faf7f2; --hartie: #fff; --text: #2b2118; --accent: #4a3728; --accent-deschis: #8b6b4e;
+  --linie: #d9cfc2; --galben: #fff2a8; --rosu: #b3402f; --verde: #2f7a3c;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --fundal: #1d1814; --hartie: #2a231d; --text: #efe7dc; --accent: #d8b99a; --accent-deschis: #b08f70; --linie: #4a3e34; --galben: #6b5a12; }
+}
+:root[data-theme="dark"] { --fundal: #1d1814; --hartie: #2a231d; --text: #efe7dc; --accent: #d8b99a; --accent-deschis: #b08f70; --linie: #4a3e34; --galben: #6b5a12; }
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--fundal); color: var(--text); font: 16px/1.4 system-ui, "Segoe UI", sans-serif; }
+.bara { display: flex; align-items: center; gap: 16px; padding: 8px 16px; background: var(--accent); color: #fff; flex-wrap: wrap; }
+.bara h1 { font-size: 20px; margin: 0; flex: 1; }
+.pasi button { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.5); padding: 6px 12px; border-radius: 6px; cursor: pointer; margin-right: 4px; }
+.pasi button.activ { background: #fff; color: var(--accent); font-weight: 600; }
+#btn-setari { background: transparent; color: #fff; border: 0; font-size: 22px; cursor: pointer; }
+main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+.pas.ascuns { display: none; }
+.caseta-ghid { background: var(--hartie); border-left: 4px solid var(--accent-deschis); padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; font-size: 15px; }
+.zona-incarcare { border: 2px dashed var(--linie); border-radius: 10px; padding: 28px; text-align: center; background: var(--hartie); }
+.zona-incarcare.peste { border-color: var(--accent-deschis); background: var(--galben); }
+button { font: inherit; cursor: pointer; border-radius: 6px; border: 1px solid var(--linie); background: var(--hartie); color: var(--text); padding: 6px 12px; }
+button.mare { font-size: 18px; padding: 12px 20px; }
+button.principal { background: var(--accent); color: #fff; border-color: var(--accent); }
+button.secundar { opacity: .85; }
+button:disabled { opacity: .45; cursor: not-allowed; }
+.rand-actiuni { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 14px 0; }
+#progres { font-weight: 600; }
+.miniaturi { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+.miniatura { background: var(--hartie); border: 1px solid var(--linie); border-radius: 8px; padding: 6px; text-align: center; font-size: 13px; }
+.miniatura img { width: 100%; aspect-ratio: 210/297; object-fit: cover; border-radius: 4px; cursor: zoom-in; }
+.stare-citit { color: var(--verde); } .stare-eroare { color: var(--rosu); } .stare-citire { color: var(--accent-deschis); }
+
+/* Pasul 2 */
+.pagina-verif { display: grid; grid-template-columns: minmax(220px, 2fr) 3fr; gap: 16px; background: var(--hartie); border: 1px solid var(--linie); border-radius: 10px; padding: 12px; margin-bottom: 18px; }
+.pagina-verif img { width: 100%; border-radius: 4px; cursor: zoom-in; border: 1px solid var(--linie); }
+.pagina-verif h3 { margin: 0 0 8px; font-size: 16px; }
+.sectiune { border-top: 1px solid var(--linie); padding-top: 8px; margin-top: 8px; }
+.sectiune .antet { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+.nume-rand { display: flex; gap: 6px; align-items: center; margin: 3px 0; }
+.nume-rand input[type=text] { flex: 1; font: inherit; padding: 4px 8px; border: 1px solid var(--linie); border-radius: 4px; background: var(--fundal); color: var(--text); }
+.nume-rand input.nesigur { background: var(--galben); }
+.nume-rand .orig { font-size: 12px; opacity: .7; min-width: 90px; }
+.nume-rand button { padding: 2px 8px; }
+mark.nesigur { background: var(--galben); }
+.obs { font-size: 13px; opacity: .75; margin-top: 6px; }
+.eroare { color: var(--rosu); }
+select, input[type=text] { font: inherit; padding: 4px 8px; border: 1px solid var(--linie); border-radius: 4px; background: var(--fundal); color: var(--text); }
+dialog { border: 1px solid var(--linie); border-radius: 10px; background: var(--hartie); color: var(--text); max-width: 460px; }
+dialog label { display: block; margin: 10px 0; }
+dialog input, dialog select { width: 100%; margin-top: 4px; }
+.mic { font-size: 13px; opacity: .75; }
+#lupa img { max-width: 85vw; max-height: 80vh; }
+
+/* Pasul 3: foile A4 cu 4 A6 */
+.a4 { width: 210mm; height: 297mm; background: #fff; color: #000; display: grid; grid-template-columns: 105mm 105mm; grid-template-rows: 148.5mm 148.5mm; margin: 0 auto 10mm; box-shadow: 0 2px 8px rgba(0,0,0,.2); page-break-after: always; break-after: page; }
+.a6 { width: 105mm; height: 148.5mm; padding: 9mm 8mm 7mm; display: flex; flex-direction: column; overflow: hidden; font-family: "Times New Roman", Georgia, serif; }
+.taiere .a6:nth-child(1), .taiere .a6:nth-child(3) { border-right: 1px dashed #999; }
+.taiere .a6:nth-child(1), .taiere .a6:nth-child(2) { border-bottom: 1px dashed #999; }
+.a6 .titlu { text-align: center; font-size: 18pt; font-weight: 700; letter-spacing: .08em; margin-bottom: 3mm; }
+.a6 .titlu.adormiti::before { content: "✝ "; }
+.a6 .lista { flex: 1; margin: 0; padding: 0 0 0 4mm; list-style: none; }
+.a6 .lista li { line-height: 1.25; }
+.a6 .casa { font-style: italic; text-align: center; margin-top: 2mm; }
+.a6 .data { text-align: right; font-size: 11pt; margin-top: 2mm; }
+.a6 .cont { font-size: 9pt; opacity: .7; text-align: center; }
+@media print {
+  @page { size: A4 portrait; margin: 0; }
+  body { background: #fff; }
+  .bara, .caseta-ghid, .rand-actiuni, #pas-1, #pas-2 { display: none !important; }
+  main { max-width: none; padding: 0; margin: 0; }
+  #pas-3 { display: block !important; }
+  .a4 { box-shadow: none; margin: 0; }
+}
+@media (max-width: 700px) { .pagina-verif { grid-template-columns: 1fr; } .a4 { transform: scale(.45); transform-origin: top left; height: 134mm; } }
