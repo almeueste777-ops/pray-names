@@ -34,8 +34,18 @@ Reguli:
     e.reincearca = r.status === 429 || r.status === 503 || r.status === 529; return e;
   }
 
+  // Google retrage/supraîncarcă modelele des: fără model ales, se încearcă pe rând (3.11.2026: 3.8 și 3.7 dădeau 503, 3.5 mergea).
+  const MODELE_GEMINI = ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.5-flash', 'gemini-3-flash-preview'];
   async function gemini(imgBase64, mime, cfg) {
-    const model = cfg.model || 'gemini-3.8-flash';
+    const modele = cfg.model ? [cfg.model] : MODELE_GEMINI;
+    let ultima;
+    for (const model of modele) {
+      try { return await geminiModel(model, imgBase64, mime, cfg); }
+      catch (e) { ultima = e; if (!e.reincearca && !/ 404:/.test(e.message)) throw e; }
+    }
+    throw ultima;
+  }
+  async function geminiModel(model, imgBase64, mime, cfg) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
     const body = {
       contents: [{ parts: [{ inlineData: { mimeType: mime, data: imgBase64 } }, { text: PROMPT }] }],
