@@ -60,6 +60,19 @@
     return { nume: titlu(token), sex: null, sigur: false, corectat: false };
   }
 
+  // Nume compuse = O SINGURĂ persoană (hotărârea ei 3.11.2026: „Ana-Maria e un nume întreg"); rămân întregi.
+  // „Roxana Gabriela", „Marcela Mihaela" sunt două nume → regula „același sex → doar primul".
+  const COMPUSE = [['Ana', 'Maria']];
+  function lipesteCompuse(parti) {
+    const out = [];
+    for (let i = 0; i < parti.length; i++) {
+      const c = COMPUSE.find(k => k.every((n, j) => parti[i + j] && parti[i + j].nume === n));
+      if (c) { out.push({ nume: c.join('-'), sex: parti[i].sex, sigur: parti.slice(i, i + c.length).every(p => p.sigur), corectat: parti.slice(i, i + c.length).some(p => p.corectat) }); i += c.length - 1; }
+      else out.push(parti[i]);
+    }
+    return out;
+  }
+
   const RE_CRUCE = /^\s*[+†✝✞☦]\s*/;
   const RE_CTNA = /\bcu\s+tot\s+neamul(\s+(lui|ei|lor))?(\s+cel\s+adormit)?|\bc\.?t\.?n\.?a\.?\b/i;
   const RE_CASA = /\bcu\s+(toat[ăa]\s+casa(\s+lor)?|fii+\b.*|fiul\b.*|fiica\b.*|copii+\b.*|nepo[țt]i\w*\b.*|familia\b.*|toat[ăa]\s+familia\b.*)/i;
@@ -83,7 +96,7 @@
       tokens.push(b);
     }
     if (!tokens.length) return (casa || ctna) ? { nume: '', ctna, casa, sigur: true, original: text.trim(), corectat: false, cruce } : null;
-    const parti = tokens.map(corecteazaNume);
+    const parti = lipesteCompuse(tokens.map(corecteazaNume));
     if (/\d/.test(text) && parti.every(p => !p.sex)) return null;   // „50 lei", „25 oct": cifre și niciun nume cunoscut
     let alese = parti, sigur = parti.every(p => p.sigur);
     if (parti.length >= 2) {

@@ -87,5 +87,14 @@ eq(R.parseazaData('31.02', azi), null, '31 februarie nu există');
 eq(R.parseazaData('05.11.2026', azi), '05.11.2026', 'deja normalizată');
 const ech = R.construiesteFoi([{ data: 'x', sectiuni: [{ categorie: 'vii', casa: true, nume: Array.from({ length: 17 }, (_, i) => ({ nume: 'N' + i })) }] }]);
 eq(ech.map(f => [f.nume.length, f.continuare, f.casa]), [[9, false, false], [8, true, true]], 'continuare echilibrată 9+8');
+// --- hotărârea ei 3.11.2026: Ana-Maria e un nume întreg; Roxana Gabriela / Marcela Mihaela = doar primul ---
+eq(L('Ana-Maria'), 'Ana-Maria', 'Ana-Maria întreg');
+eq(L('Ana Maria'), 'Ana-Maria', 'Ana Maria cu spațiu');
+eq(L('ANA-MARIA'), 'Ana-Maria', 'majuscule');
+eq(L('Ana-Maria Gabriela'), 'Ana-Maria', 'Ana-Maria + alt nume f → doar Ana-Maria');
+eq(L('Ana-Maria și Ion'), 'Ana-Maria-Ion', 'Ana-Maria + bărbat');
+eq(L('Roxana Gabriela'), 'Roxana', 'două nume f → primul');
+eq(L('Marcela Mihaela'), 'Marcela', 'două nume f → primul');
+eq(L('Maria Ana'), 'Maria', 'ordinea inversă nu e Ana-Maria');
 console.log(`${ok} ok, ${rau} pică`);
 process.exit(rau ? 1 : 0);
