@@ -44,7 +44,8 @@
   // Un singur prenume → forma canonică din dicționar (dacă există) + sexul.
   // Corecție fuzzy doar de la 5 litere în sus (1 literă) și de la 8 în sus (2 litere); altfel rămâne cum e, marcat nesigur.
   function corecteazaNume(token) {
-    const cheie = faraDiacritice(token.replace(/^y/i, 'i'));   // „Yoan" → Ioan
+    let cheie = faraDiacritice(token.replace(/^y/i, 'i'));   // „Yoan" → Ioan
+    if (!CANON.has(cheie) && /^j/.test(cheie) && CANON.has('i' + cheie.slice(1))) cheie = 'i' + cheie.slice(1);   // „Joan" (citit de model) → Ioan
     if (CANON.has(cheie)) {
       const n = CANON.get(cheie);
       return { nume: n, sex: NUME.sex.get(n.toLowerCase()), sigur: true, corectat: n !== titlu(token) };

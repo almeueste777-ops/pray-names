@@ -96,5 +96,8 @@ eq(L('Ana-Maria și Ion'), 'Ana-Maria-Ion', 'Ana-Maria + bărbat');
 eq(L('Roxana Gabriela'), 'Roxana', 'două nume f → primul');
 eq(L('Marcela Mihaela'), 'Marcela', 'două nume f → primul');
 eq(L('Maria Ana'), 'Maria', 'ordinea inversă nu e Ana-Maria');
+eq(L('Joan'), 'Ioan', 'Joan citit de Gemini → Ioan');
+eq(L('Joana'), 'Ioana', 'Joana → Ioana');
+eq(L('Jana'), 'Jana', 'Jana rămâne Jana');
 console.log(`${ok} ok, ${rau} pică`);
 process.exit(rau ? 1 : 0);
