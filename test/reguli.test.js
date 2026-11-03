@@ -102,5 +102,10 @@ eq(L('Maria Ana'), 'Maria', 'ordinea inversă nu e Ana-Maria');
 eq(L('Joan'), 'Ioan', 'Joan citit de Gemini → Ioan');
 eq(L('Joana'), 'Ioana', 'Joana → Ioana');
 eq(L('Jana'), 'Jana', 'Jana rămâne Jana');
+// foile fără dată: data tipăririi + 7 zile
+eq(R.dataTiparirii(new Date(2026, 10, 4)), '11.11.2026', 'azi + 7');
+eq(R.dataTiparirii(new Date(2026, 11, 28)), '04.01.2027', 'peste an');
+const fd = R.construiesteFoi([{ data: null, sectiuni: [{ categorie: 'vii', nume: [{ nume: 'Ion' }] }] }, { data: '20.10.2026', sectiuni: [{ categorie: 'vii', nume: [{ nume: 'Ana' }] }] }], null, new Date(2026, 10, 4));
+eq(fd.map(f => [f.data, f.dataAutomata]), [['11.11.2026', true], ['20.10.2026', false]], 'fără dată → azi+7; cu dată → neschimbată');
 console.log(`${ok} ok, ${rau} pică`);
 process.exit(rau ? 1 : 0);

@@ -263,8 +263,8 @@ $('#btn-data-toate').onclick = () => {
 function deseneazaFoi() {
   const foi = REGULI.construiesteFoi(lot.pagini);
   const a4uri = REGULI.grupeazaA4(foi);
-  const faraData = foi.filter(f => !f.data).length;
-  $('#rezumat-foi').textContent = `${foi.length} foi A6 pe ${a4uri.length} coli A4` + (faraData ? ` — ATENȚIE: ${faraData} foi fără dată (pasul 2)` : '');
+  const automate = foi.filter(f => f.dataAutomata).length;
+  $('#rezumat-foi').textContent = `${foi.length} foi A6 pe ${a4uri.length} coli A4` + (automate ? ` · ${automate} foi fără dată au primit ${REGULI.dataTiparirii()} (azi + 7 zile)` : '');
   const cont = $('#foi'); cont.innerHTML = '';
   const taiere = $('#linii-taiere').checked;
   FOAIE.incarcaFont(setari.aspect.font);

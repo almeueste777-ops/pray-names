@@ -173,8 +173,14 @@
   function proceseazaSectiune(s) { return proceseazaSectiuni(s)[0] || { categorie: 'vii', nume: [], casa: false }; }
 
   // Paginile verificate → foi A6. O pagină cu vii ȘI adormiți dă două foi. Peste MAX nume → foi de continuare echilibrate.
-  function construiesteFoi(pagini, max) {
+  // Foile fără dată primesc data tipăririi + 7 zile (hotărârea ei 4.11.2026).
+  function dataTiparirii(azi, zile) {
+    const d = new Date(azi || Date.now()); d.setDate(d.getDate() + (zile == null ? 7 : zile));
+    return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`;
+  }
+  function construiesteFoi(pagini, max, azi) {
     max = max || MAX_NUME_PE_FOAIE;
+    const implicita = dataTiparirii(azi);
     const foi = [];
     pagini.forEach((p, ip) => (p.sectiuni || []).forEach(s => {
       const nume = s.nume.filter(n => n.nume && !n.sters);
@@ -184,7 +190,7 @@
         const pe = baza + (k < rest ? 1 : 0);   // echilibrat: 49 → 17+16+16
         const bucata = nume.slice(i, i + pe);   // loturile vechi mai au „ctna" lipit de nume: îl scoatem și îl ridicăm pe foaie
         foi.push({ categorie: s.categorie, nume: bucata.map(n => n.nume.replace(/\s+ctna$/i, '')), casa: !!s.casa && k === bucati - 1, ctna: bucata.some(n => n.ctna || /\sctna$/i.test(n.nume)),
-          data: p.data, pagina: ip + 1, continuare: k > 0 });
+          data: p.data || implicita, dataAutomata: !p.data, pagina: ip + 1, continuare: k > 0 });
         i += pe;
       }
     }));
@@ -193,5 +199,5 @@
 
   function grupeazaA4(foi) { const a4 = []; for (let i = 0; i < foi.length; i += 4) a4.push(foi.slice(i, i + 4)); return a4; }
 
-  return { proceseazaLinie, proceseazaSectiune, proceseazaSectiuni, categorieDinTitlu, parseazaData, construiesteFoi, grupeazaA4, corecteazaNume, MAX_NUME_PE_FOAIE };
+  return { dataTiparirii, proceseazaLinie, proceseazaSectiune, proceseazaSectiuni, categorieDinTitlu, parseazaData, construiesteFoi, grupeazaA4, corecteazaNume, MAX_NUME_PE_FOAIE };
 });
