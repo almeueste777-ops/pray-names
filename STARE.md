@@ -9,8 +9,12 @@
 - Interfața pe lotul de probă (`?proba=probe/lot.json`): pasul 2 arată poza + numele editabile, nesigurele galbene.
 - Tipărirea: Edge headless → PDF cu 3 coli A4 × 4 A6, regulile aplicate (Ioana‑Andreea → Ioana, „Ion ctna", „cu toată casa lor", ✝ ADORMIȚI, data jos‑dreapta).
 
+## Citirea reală cu Gemini (4.11.2026, cheia ei, gemini-3.5-flash)
+- 9/9 pagini citite, 0 erori după ce s-a ales modelul (2.5-flash = 404 retras; 3.8/3.7 = 503 supraîncărcate; lista de rezervă în ocr.js).
+- Față de citirea mea din imagini: ~75 nume, 2 diferențe (p8 „Marian-Simona" vs „Maria-Simona"; p9 „Maricica" vs „Marian cu fii"), „Joan" → reparat prin regula J→I. Data albastră lipsă pe p8, pe p6 modelul a dat două date. Verificarea la pasul 2 rămâne obligatorie.
+
 ## Ce NU e probat
-- Citirea reală cu Gemini / Claude (lipsește cheia). Promptul și structura JSON sunt scrise, dar netestate pe API.
+- Claude ca motor (cere cheie plătită de la console.anthropic.com).
 - Instalarea ca PWA și tipărirea de pe imprimanta ei.
 
 ## Următorii pași
