@@ -35,7 +35,7 @@ Reguli:
   }
 
   async function gemini(imgBase64, mime, cfg) {
-    const model = cfg.model || 'gemini-2.5-flash';
+    const model = cfg.model || 'gemini-3.8-flash';
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
     const body = {
       contents: [{ parts: [{ inlineData: { mimeType: mime, data: imgBase64 } }, { text: PROMPT }] }],
