@@ -16,8 +16,8 @@ eq(L('Vlad-Ionuț'), 'Vlad', 'm-m');
 eq(L('Maria-Erika'), 'Maria', 'f-f');
 eq(L('Matei-Constantin'), 'Matei', 'm-m');
 // ctna
-eq(L('Ion cu tot neamul lui cel adormit'), 'Ion ctna', 'ctna lui');
-eq(L('Victoria cu tot neamul ei cel adormit.'), 'Victoria ctna', 'ctna ei');
+const ct = R.proceseazaLinie('Ion cu tot neamul lui cel adormit'); eq([ct.nume, ct.ctna], ['Ion', true], 'ctna lui: numele curat + semn');
+eq(L('Victoria cu tot neamul ei cel adormit.'), 'Victoria', 'ctna ei');
 // cu fii → casa
 const m = R.proceseazaLinie('Marian cu fii');
 eq([m.nume, m.casa], ['Marian', true], 'cu fii');
@@ -50,7 +50,9 @@ eq(R.parseazaData('15 ian', azi), '15.01.2027', 'anul următor');
 eq(R.parseazaData('ceva', azi), null, 'fără dată');
 // secțiune + foi
 const sect = R.proceseazaSectiune({ titlu: 'Morții', linii: ['Ion cu tot neamul lui cel adormit', 'Victoria cu tot neamul ei cel adormit'] });
-eq([sect.categorie, sect.nume.map(n => n.nume)], ['adormiti', ['Ion ctna', 'Victoria ctna']], 'secțiune morți');
+eq([sect.categorie, sect.nume.map(n => n.nume)], ['adormiti', ['Ion', 'Victoria']], 'secțiune morți');
+eq(R.construiesteFoi([{ data: 'x', sectiuni: [sect] }])[0].ctna, true, 'foaia poartă ctna o singură dată');
+eq(R.construiesteFoi([{ data: 'x', sectiuni: [R.proceseazaSectiune({ titlu: 'Vii', linii: ['Ion'] })] }])[0].ctna, false, 'fără ctna');
 const foi = R.construiesteFoi([{ data: '23.11.2026', sectiuni: [
   R.proceseazaSectiune({ titlu: 'Vii', linii: ['Maria-Simona', 'Gheorghe-Adrian', 'Constantin'] }), sect] }]);
 eq(foi.map(f => [f.categorie, f.nume.length, f.data]), [['vii', 3, '23.11.2026'], ['adormiti', 2, '23.11.2026']], 'două foi dintr-o pagină');

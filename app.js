@@ -40,10 +40,18 @@ $('#setari').addEventListener('close', () => {
   salveazaSetari(); actualizeazaButoane();
 });
 // aspectul foii (pasul 3)
-for (const [id, cheie] of [['#asp-font', 'font'], ['#asp-marime', 'marime'], ['#asp-chenar', 'chenar'], ['#asp-culoare', 'culoare']]) {
+for (const [id, cheie] of [['#asp-font', 'font'], ['#asp-chenar', 'chenar'], ['#asp-culoare', 'culoare']]) {
   const el = $(id); el.value = setari.aspect[cheie];
   el.onchange = () => { setari.aspect[cheie] = el.value; salveazaSetari(); deseneazaFoi(); };
 }
+// mărimea literei: scrisă de ea (pt) sau automată
+(function marime() {
+  const nr = $('#asp-marime'), auto = $('#asp-auto');
+  const arata = () => { auto.checked = setari.aspect.marime === 'auto'; nr.disabled = auto.checked; nr.value = auto.checked ? (setari.aspect.ultimaMarime || 18) : setari.aspect.marime; };
+  nr.onchange = () => { const v = Math.min(48, Math.max(8, +nr.value || 18)); setari.aspect.marime = v; setari.aspect.ultimaMarime = v; salveazaSetari(); arata(); deseneazaFoi(); };
+  auto.onchange = () => { setari.aspect.marime = auto.checked ? 'auto' : (setari.aspect.ultimaMarime || 18); salveazaSetari(); arata(); deseneazaFoi(); };
+  arata();
+})();
 
 // ---------- cota zilnică Gemini ----------
 function deseneazaCota() {
@@ -236,9 +244,11 @@ function sectiuneUI(p, s, k) {
     const r = document.createElement('div'); r.className = 'nume-rand';
     const nesigur = !n.sigur || n.corectat;
     r.innerHTML = `<span class="mic">${j + 1}.</span><input type="text" class="${nesigur ? 'nesigur' : ''}" value="${esc(n.nume)}">
-      <span class="orig" title="cum a citit modelul">${nesigur && n.original ? '„' + esc(n.original) + '"' : ''}</span><button class="secundar" title="șterge">✕</button>`;
-    const inp = r.querySelector('input');
+      <span class="orig" title="cum a citit modelul">${nesigur && n.original ? '„' + esc(n.original) + '"' : ''}</span>
+      <label class="mic" title="cu tot neamul lui cel adormit"><input type="checkbox" data-camp="ctna"> ctna</label><button class="secundar" title="șterge">✕</button>`;
+    const inp = r.querySelector('input[type=text]');
     inp.onchange = () => { n.nume = inp.value.trim(); n.sigur = true; n.corectat = false; inp.classList.remove('nesigur'); salveazaLot(); };
+    const cb = r.querySelector('[data-camp=ctna]'); cb.checked = !!n.ctna; cb.onchange = () => { n.ctna = cb.checked; salveazaLot(); };
     r.querySelector('button').onclick = () => { s.nume.splice(j, 1); salveazaLot(); deseneazaVerificare(); };
     lista.appendChild(r);
   });

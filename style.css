@@ -96,15 +96,15 @@ dialog input, dialog select { width: 100%; margin-top: 6px; }
 .a4 { width: 210mm; height: 296.5mm; background: #fff; color: #000; display: grid; grid-template-columns: 105mm 105mm; grid-template-rows: 148.25mm 148.25mm; margin: 0 auto 12mm; box-shadow: 0 20px 50px rgba(15,26,46,.25); page-break-after: always; break-after: page; border-radius: 2px; }
 .a4:last-child { page-break-after: auto; break-after: auto; }
 .a6 { position: relative; width: 105mm; height: 148.25mm; overflow: hidden; }
-.taiere .a6:nth-child(1), .taiere .a6:nth-child(3) { border-right: 1px dashed #bbb; }
-.taiere .a6:nth-child(1), .taiere .a6:nth-child(2) { border-bottom: 1px dashed #bbb; }
+.taiere .a6:nth-child(1), .taiere .a6:nth-child(3) { border-right: .4mm dashed #9a9a9a; }
+.taiere .a6:nth-child(1), .taiere .a6:nth-child(2) { border-bottom: .4mm dashed #9a9a9a; }
 .a6 .chenar { position: absolute; inset: 0; width: 100%; height: 100%; }
-.a6 .foaie { position: absolute; inset: 0; padding: 12mm 12mm 11mm; display: flex; flex-direction: column; overflow: hidden; }
-.a6 .cap { display: flex; align-items: baseline; justify-content: space-between; gap: 4mm; margin: 0 7mm 4mm; }
-.a6 .titlu { font-size: 16pt; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
-.a6 .titlu.adormiti { letter-spacing: .1em; }
-.a6 .data { font-size: 10.5pt; font-variant-numeric: tabular-nums; letter-spacing: .04em; white-space: nowrap; }
+.a6 .foaie { position: absolute; inset: 0; padding: 9mm 10mm 9mm; display: flex; flex-direction: column; overflow: hidden; }
+/* titlul e TITLU: centrat, mare; data stă într-o casetă gri deschis, sus-dreapta, cu cifre de tabel (toate la fel de late) */
+.a6 .titlu { text-align: center; font-size: 19pt; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; margin: 6.5mm 0 3mm; }
+.a6 .data { position: absolute; top: 8.5mm; right: 9mm; font: 600 10.5pt/1 "Atkinson Hyperlegible", "Inter", -apple-system, "Segoe UI", system-ui, sans-serif; font-variant-numeric: tabular-nums; letter-spacing: .06em; color: #222; background: #f1f1f1; border: .25mm solid #d6d6d6; border-radius: 1.3mm; padding: 1.4mm 2.4mm; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .a6 .cont { font-size: 9pt; opacity: .7; text-align: center; margin-top: -2mm; margin-bottom: 1mm; }
+.a6 .jos { text-align: center; font-size: 12pt; font-weight: 600; letter-spacing: .04em; margin-top: 2.5mm; }
 /* numele: bloc centrat pe foaie, dar fiecare coloană aliniată la stânga (ochiul se întoarce mereu în același loc) */
 .a6 .nume { flex: 1; display: flex; justify-content: center; align-items: flex-start; gap: 7mm; min-height: 0; }
 .a6 .nume ul { margin: 0; padding: 0; list-style: none; text-align: left; }
@@ -114,7 +114,6 @@ dialog input, dialog select { width: 100%; margin-top: 6px; }
 .a6 .nume.m22 { font-size: 22pt; } .a6 .nume.m20 { font-size: 20pt; } .a6 .nume.m18 { font-size: 18pt; } .a6 .nume.m16 { font-size: 16pt; }
 .a6 .nume.m14 { font-size: 14pt; } .a6 .nume.m13 { font-size: 13pt; } .a6 .nume.m12 { font-size: 12pt; } .a6 .nume.m11 { font-size: 11pt; } .a6 .nume.m10 { font-size: 10pt; }
 .a6 .nume.col2 { line-height: 1.35; }
-.a6 .casa { font-style: italic; text-align: center; margin-top: 2mm; font-size: 11pt; }
 @media print {
   body { background: #fff; }
   .fundal, .bara, .caseta-ghid, .rand-actiuni, #pas-1, #pas-2 { display: none !important; }

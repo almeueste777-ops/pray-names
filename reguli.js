@@ -109,7 +109,7 @@
     }
     const prefix = titluri.length ? titluri.join(' ') + ' ' : '';
     return {
-      nume: prefix + alese.map(p => p.nume).join('-') + (ctna ? ' ctna' : ''),
+      nume: prefix + alese.map(p => p.nume).join('-'),   // „ctna" NU mai intră în nume: se scrie o dată, jos, pe foaie (hotărârea ei 4.11)
       ctna, casa, sigur, cruce,
       original: text.trim(),
       corectat: parti.some(p => p.corectat),
@@ -182,7 +182,8 @@
       const bucati = Math.ceil(nume.length / max), baza = Math.floor(nume.length / bucati), rest = nume.length % bucati;
       for (let i = 0, k = 0; k < bucati; k++) {
         const pe = baza + (k < rest ? 1 : 0);   // echilibrat: 49 → 17+16+16
-        foi.push({ categorie: s.categorie, nume: nume.slice(i, i + pe).map(n => n.nume), casa: !!s.casa && k === bucati - 1,
+        const bucata = nume.slice(i, i + pe);   // loturile vechi mai au „ctna" lipit de nume: îl scoatem și îl ridicăm pe foaie
+        foi.push({ categorie: s.categorie, nume: bucata.map(n => n.nume.replace(/\s+ctna$/i, '')), casa: !!s.casa && k === bucati - 1, ctna: bucata.some(n => n.ctna || /\sctna$/i.test(n.nume)),
           data: p.data, pagina: ip + 1, continuare: k > 0 });
         i += pe;
       }
