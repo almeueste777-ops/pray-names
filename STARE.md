@@ -1,6 +1,7 @@
 # STARE – Pray Names
 
-**Versiune:** 0.3 (4.11.2026) – foaia nouă (chenar SVG, 2 coloane peste 10 nume, data sus-dreapta, font/mărime/chenar/culori la alegere în pasul 3), design iOS (sticlă, auriu pe cerneală), contor de cotă Gemini pe zi (cotele reale din contul ei: Flash Lite 500/zi, Flash 20/zi; reset 10:00 ora României), modelul implicit Gemini 3.5 Flash Lite (la fel de bun la nume ca Flash pe cele 9 pagini, mai slab la data albastră).
+**Versiune:** 0.4 (4.11.2026, noaptea) – după corecturile ei: titlul (VII / ✝ ADORMIȚI) centrat ca titlu; data într-o casetă gri deschis cu cifre de tabel, sus-dreapta; mărimea literei scrisă de ea în pt (sau automată); chenarul e o RAMĂ pe marginea foii (4 mm), ornamentele stau pe bandă, interiorul curat; linii de tăiere 0,4 mm; „ctna" și „cu toată casa lor" o singură dată, jos (bifă ctna pe fiecare nume la pasul 2).
+**Versiune 0.3:** (4.11.2026) – foaia nouă (chenar SVG, 2 coloane peste 10 nume, data sus-dreapta, font/mărime/chenar/culori la alegere în pasul 3), design iOS (sticlă, auriu pe cerneală), contor de cotă Gemini pe zi (cotele reale din contul ei: Flash Lite 500/zi, Flash 20/zi; reset 10:00 ora României), modelul implicit Gemini 3.5 Flash Lite (la fel de bun la nume ca Flash pe cele 9 pagini, mai slab la data albastră).
 **Versiune veche:** 0.2 (3.11.2026) – după auditul Sonnet (2 blocante + 9 importante reparate). Live: https://almeueste777-ops.github.io/pray-names/ . Neprobată încă de Otilia cu mausul și fără cheie API reală.
 
 ## Ce merge (verificat)
