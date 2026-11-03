@@ -11,9 +11,19 @@
   else root.REGULI = factory(root.NUME);
 })(typeof self !== 'undefined' ? self : this, function (NUME) {
 
-  const MAX_NUME_PE_FOAIE = 16;
+  const MAX_NUME_PE_FOAIE = 14;
   const LUNI = { ian: 1, feb: 2, mar: 3, apr: 4, mai: 5, iun: 6, iul: 7, aug: 8, sep: 9, sept: 9, oct: 10, noi: 11, nov: 11, dec: 12 };
   const ROMANE = { i: 1, ii: 2, iii: 3, iv: 4, v: 5, vi: 6, vii: 7, viii: 8, ix: 9, x: 10, xi: 11, xii: 12 };
+  const ZILE_IN_LUNA = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+  // Titluri clericale/monahale: rămân în fața numelui, nu sunt nume.
+  const TITLURI = { pr: 'Pr.', preot: 'Pr.', parintele: 'Pr.', ierom: 'Ierom.', ieromonah: 'Ierom.', ierod: 'Ierod.', ierodiacon: 'Ierod.',
+    diac: 'Diac.', diacon: 'Diac.', arhim: 'Arhim.', arhimandrit: 'Arhim.', protos: 'Protos.', protosinghel: 'Protos.',
+    monah: 'Monah', monahia: 'Monahia', maica: 'Maica', mon: 'Monah', ps: 'PS', ips: 'IPS', ep: 'Ep.', episcop: 'Ep.', sf: 'Sf.' };
+  // Cuvinte de umplutură care nu sunt nume și nu schimbă nimic.
+  const STOP = new Set(['si', 'sau', 'de', 'cu', 'la', 'lui', 'ei', 'lor', 'cel', 'cea', 'cei', 'tot', 'toata', 'toti', 'toate', 'din', 'pe',
+    'fam', 'familia', 'familiei', 'copiii', 'copii', 'copilul', 'fiul', 'fiica', 'fiii', 'fii', 'fiicele', 'nepotii', 'nepotilor', 'nepoti', 'nepotul', 'nepoata',
+    'sotul', 'sotia', 'sotii', 'mama', 'tata', 'tatal', 'bunica', 'bunicul', 'fratele', 'sora', 'fratii', 'robul', 'roaba', 'robii', 'ro', 'lei', 'ron', 'euro', 'eur', 'bani', 'amin']);
 
   function faraDiacritice(s) {
     return s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ș|ş/g, 's').replace(/ț|ţ/g, 't').toLowerCase();
@@ -32,13 +42,14 @@
   const CANON = new Map(NUME.toate.map(n => [faraDiacritice(n), n]));
 
   // Un singur prenume → forma canonică din dicționar (dacă există) + sexul.
+  // Corecție fuzzy doar de la 5 litere în sus (1 literă) și de la 8 în sus (2 litere); altfel rămâne cum e, marcat nesigur.
   function corecteazaNume(token) {
     const cheie = faraDiacritice(token.replace(/^y/i, 'i'));   // „Yoan" → Ioan
     if (CANON.has(cheie)) {
       const n = CANON.get(cheie);
       return { nume: n, sex: NUME.sex.get(n.toLowerCase()), sigur: true, corectat: n !== titlu(token) };
     }
-    const toleranta = cheie.length >= 7 ? 2 : 1;
+    const toleranta = cheie.length >= 8 ? 2 : cheie.length >= 5 ? 1 : 0;
     let best = null, bestD = toleranta + 1;
     for (const [k, n] of CANON) {
       if (Math.abs(k.length - cheie.length) > toleranta) continue;
@@ -49,30 +60,43 @@
     return { nume: titlu(token), sex: null, sigur: false, corectat: false };
   }
 
-  const RE_CTNA = /cu\s+tot\s+neamul(\s+(lui|ei|lor))?(\s+cel\s+adormit)?|\bc\.?t\.?n\.?a\.?\b/i;
-  const RE_CASA = /cu\s+(toat[ăa]\s+casa(\s+lor)?|fii+\b.*|copii+\b.*|nepo[țt]ii?\b.*|familia\b.*)/i;
+  const RE_CRUCE = /^\s*[+†✝✞☦]\s*/;
+  const RE_CTNA = /\bcu\s+tot\s+neamul(\s+(lui|ei|lor))?(\s+cel\s+adormit)?|\bc\.?t\.?n\.?a\.?\b/i;
+  const RE_CASA = /\bcu\s+(toat[ăa]\s+casa(\s+lor)?|fii+\b.*|fiul\b.*|fiica\b.*|copii+\b.*|nepo[țt]i\w*\b.*|familia\b.*|toat[ăa]\s+familia\b.*)/i;
   const RE_RUGAMINTE = /\b(pt\.?|pentru|se\s+roag[ăa]|s[ăa]n[ăa]tate|spor|succes|amin)\b.*/i;
 
-  // Un rând scris de mână → un nume de tipar (sau null dacă rândul nu e nume).
+  // Un rând scris de mână → un nume de tipar. null = rândul nu e nume și nu spune nimic.
+  // Un rând doar cu „cu fii" / „cu toată casa lor" întoarce {nume:'', casa:true} ca secțiunea să afle.
   function proceseazaLinie(text) {
     let t = (text || '').trim();
     if (!t) return null;
+    const cruce = RE_CRUCE.test(t); t = t.replace(RE_CRUCE, '');
     const ctna = RE_CTNA.test(t); t = t.replace(RE_CTNA, ' ');
     const casa = RE_CASA.test(t); t = t.replace(RE_CASA, ' ');
-    t = t.replace(/\(.*?\)/g, ' ').replace(RE_RUGAMINTE, ' ').replace(/\b(lei|ron|euro|eur)\b/gi, ' ');
-    const tokens = t.split(/[-–—\/,;+\s]+/).map(x => x.replace(/[^\p{L}]/gu, '')).filter(x => x.length >= 2);
-    if (!tokens.length) return null;
+    t = t.replace(/\(.*?\)/g, ' ').replace(RE_RUGAMINTE, ' ');
+    const brute = t.split(/[-–—\/,;+&\s]+/).map(x => x.replace(/[^\p{L}]/gu, '')).filter(x => x.length >= 2);
+    const titluri = [], tokens = [];
+    for (const b of brute) {
+      const k = faraDiacritice(b);
+      if (TITLURI[k]) { if (!tokens.length) titluri.push(TITLURI[k]); continue; }
+      if (STOP.has(k)) continue;
+      tokens.push(b);
+    }
+    if (!tokens.length) return (casa || ctna) ? { nume: '', ctna, casa, sigur: true, original: text.trim(), corectat: false, cruce } : null;
     const parti = tokens.map(corecteazaNume);
     if (/\d/.test(text) && parti.every(p => !p.sex)) return null;   // „50 lei", „25 oct": cifre și niciun nume cunoscut
     let alese = parti, sigur = parti.every(p => p.sigur);
     if (parti.length >= 2) {
       const sexe = parti.map(p => p.sex);
-      if (sexe.every(s => s) && sexe.every(s => s === sexe[0])) alese = [parti[0]];   // același sex → doar primul
-      else if (sexe.some(s => !s)) sigur = false;                                      // sex necunoscut → păstrăm tot, marcăm
+      if (sexe.every(s => s)) {
+        // același sex → doar primul; sexe amestecate → primul de fiecare sex (Ion-Maria-Gheorghe → Ion-Maria)
+        const vazute = new Set(); alese = parti.filter(p => !vazute.has(p.sex) && vazute.add(p.sex));
+      } else sigur = false;                                      // sex necunoscut → păstrăm tot, marcăm
     }
+    const prefix = titluri.length ? titluri.join(' ') + ' ' : '';
     return {
-      nume: alese.map(p => p.nume).join('-') + (ctna ? ' ctna' : ''),
-      ctna, casa, sigur,
+      nume: prefix + alese.map(p => p.nume).join('-') + (ctna ? ' ctna' : ''),
+      ctna, casa, sigur, cruce,
       original: text.trim(),
       corectat: parti.some(p => p.corectat),
     };
@@ -80,51 +104,71 @@
 
   function categorieDinTitlu(titluText, areCruce) {
     const t = faraDiacritice(titluText || '');
-    if (areCruce || /adorm|mort|decedat|raposat|\+|†|✝/.test(t)) return 'adormiti';
+    if (areCruce || /adorm|mort|decedat|raposat|†|✝/.test(t)) return 'adormiti';
     return 'vii';   // vii, acatist, liturghie, nimic
   }
 
-  // „20 oct", „15 nov", „4.10", „3-X-2026", „25 octombrie" → dd.mm.yyyy. Anul: cel curent;
-  // dacă data ar cădea cu peste 60 de zile în urmă, e anul următor.
+  // „20 oct", „15 nov", „4.10", „3-X-2026", „25 octombrie", „25 de oct", „nov 5", „20oct" → dd.mm.yyyy.
+  // Anul: cel curent; dacă data ar cădea cu peste 60 de zile în urmă, e anul următor.
   function parseazaData(text, azi) {
     azi = azi || new Date();
     if (!text) return null;
-    const t = faraDiacritice(String(text)).replace(/\s+/g, ' ').trim();
-    let zi, luna, an;
-    let m = t.match(/(\d{1,2})\s*[.\-\/ ]\s*([a-z]{3,})\.?(?:\s*[.\-\/ ]?\s*(\d{4}))?/);
-    if (m) { zi = +m[1]; luna = LUNI[m[2].slice(0, 4)] || LUNI[m[2].slice(0, 3)]; an = m[3] && +m[3]; }
-    if (!luna) { m = t.match(/(\d{1,2})\s*[.\-\/ ]\s*([ivx]{1,4})\b(?:\s*[.\-\/ ]\s*(\d{4}))?/); if (m) { zi = +m[1]; luna = ROMANE[m[2]]; an = m[3] && +m[3]; } }
-    if (!luna) { m = t.match(/(\d{1,2})\s*[.\-\/]\s*(\d{1,2})(?:\s*[.\-\/]\s*(\d{2,4}))?/); if (m) { zi = +m[1]; luna = +m[2]; an = m[3] && (+m[3] < 100 ? 2000 + +m[3] : +m[3]); } }
-    if (!zi || !luna || luna < 1 || luna > 12 || zi < 1 || zi > 31) return null;
+    if (/^\d{2}\.\d{2}\.\d{4}$/.test(String(text).trim())) { const [z, l, a] = text.trim().split('.').map(Number); return valida(z, l, a) ? text.trim() : null; }
+    const t = faraDiacritice(String(text)).replace(/\bde\b/g, ' ').replace(/\s+/g, ' ').trim();
+    let zi, luna, an, m;
+    const luni = s => LUNI[s.slice(0, 4)] || LUNI[s.slice(0, 3)];
+    if ((m = t.match(/(\d{1,2})\s*[.\-\/ ]?\s*([a-z]{3,})\.?(?:\s*[.\-\/ ]?\s*(\d{4}))?/))) { zi = +m[1]; luna = luni(m[2]); an = m[3] && +m[3]; }
+    if (!luna && (m = t.match(/([a-z]{3,})\.?\s*(\d{1,2})\b(?:\s*[.\-\/ ]?\s*(\d{4}))?/))) { zi = +m[2]; luna = luni(m[1]); an = m[3] && +m[3]; }
+    if (!luna && (m = t.match(/(\d{1,2})\s*[.\-\/ ]\s*([ivx]{1,4})\b(?:\s*[.\-\/ ]\s*(\d{4}))?/))) { zi = +m[1]; luna = ROMANE[m[2]]; an = m[3] && +m[3]; }
+    if (!luna && (m = t.match(/(\d{1,2})\s*[.\-\/]\s*(\d{1,2})(?:\s*[.\-\/]\s*(\d{2,4}))?/))) { zi = +m[1]; luna = +m[2]; an = m[3] && (+m[3] < 100 ? 2000 + +m[3] : +m[3]); }
+    if (!zi || !luna) return null;
     if (!an) {
       an = azi.getFullYear();
       const d = new Date(an, luna - 1, zi);
       if ((azi - d) / 86400000 > 60) an++;
     }
+    if (!valida(zi, luna, an)) return null;
     return `${String(zi).padStart(2, '0')}.${String(luna).padStart(2, '0')}.${an}`;
   }
+  function valida(zi, luna, an) {
+    if (luna < 1 || luna > 12 || zi < 1) return false;
+    const max = luna === 2 && !(an % 4 === 0 && (an % 100 !== 0 || an % 400 === 0)) ? 28 : ZILE_IN_LUNA[luna - 1];
+    return zi <= max;
+  }
 
-  // O secțiune citită ({titlu, cruce, linii:[{text}]}) → {categorie, nume:[...], casa}
-  function proceseazaSectiune(s) {
-    const nume = (s.linii || []).map(l => {
+  // O secțiune citită ({titlu, categorie, cruce, linii:[{text,sigur}]}) → 1 sau 2 secțiuni de tipar:
+  // numele cu cruce în față se mută singure la adormiți.
+  function proceseazaSectiuni(s) {
+    if (!s || typeof s !== 'object') return [];
+    const toate = (s.linii || []).map(l => {
+      if (l == null) return null;
       const r = proceseazaLinie(typeof l === 'string' ? l : l.text);
       if (r && typeof l === 'object' && l.sigur === false) r.sigur = false;   // modelul a ezitat la citire
       return r;
     }).filter(Boolean);
-    const casa = nume.some(n => n.casa) || RE_CASA.test(s.observatii || '');
-    return { categorie: s.categorie === 'adormiti' || s.categorie === 'vii' ? s.categorie : categorieDinTitlu(s.titlu, s.cruce), nume, casa };
+    const casa = toate.some(n => n.casa) || RE_CASA.test(s.observatii || '');
+    const nume = toate.filter(n => n.nume);
+    const categorie = s.cruce ? 'adormiti' : (s.categorie === 'adormiti' || s.categorie === 'vii') ? s.categorie : categorieDinTitlu(s.titlu, false);
+    const cuCruce = categorie === 'vii' ? nume.filter(n => n.cruce) : [];
+    const rezultat = [];
+    const principale = nume.filter(n => !cuCruce.includes(n));
+    if (principale.length || !cuCruce.length) rezultat.push({ categorie, nume: principale, casa });
+    if (cuCruce.length) rezultat.push({ categorie: 'adormiti', nume: cuCruce, casa: false });
+    return rezultat;
   }
+  function proceseazaSectiune(s) { return proceseazaSectiuni(s)[0] || { categorie: 'vii', nume: [], casa: false }; }
 
-  // Paginile verificate → foi A6. O pagină cu vii ȘI adormiți dă două foi. Peste MAX nume → foaie de continuare.
+  // Paginile verificate → foi A6. O pagină cu vii ȘI adormiți dă două foi. Peste MAX nume → foi de continuare echilibrate.
   function construiesteFoi(pagini, max) {
     max = max || MAX_NUME_PE_FOAIE;
     const foi = [];
     pagini.forEach((p, ip) => (p.sectiuni || []).forEach(s => {
       const nume = s.nume.filter(n => n.nume && !n.sters);
       if (!nume.length) return;
-      for (let i = 0; i < nume.length; i += max) {
-        foi.push({ categorie: s.categorie, nume: nume.slice(i, i + max).map(n => n.nume), casa: !!s.casa && i + max >= nume.length,
-          data: p.data, pagina: ip + 1, continuare: i > 0 });
+      const bucati = Math.ceil(nume.length / max), pe = Math.ceil(nume.length / bucati);
+      for (let i = 0, k = 0; i < nume.length; i += pe, k++) {
+        foi.push({ categorie: s.categorie, nume: nume.slice(i, i + pe).map(n => n.nume), casa: !!s.casa && i + pe >= nume.length,
+          data: p.data, pagina: ip + 1, continuare: k > 0 });
       }
     }));
     return foi;
@@ -132,5 +176,5 @@
 
   function grupeazaA4(foi) { const a4 = []; for (let i = 0; i < foi.length; i += 4) a4.push(foi.slice(i, i + 4)); return a4; }
 
-  return { proceseazaLinie, proceseazaSectiune, categorieDinTitlu, parseazaData, construiesteFoi, grupeazaA4, corecteazaNume, MAX_NUME_PE_FOAIE };
+  return { proceseazaLinie, proceseazaSectiune, proceseazaSectiuni, categorieDinTitlu, parseazaData, construiesteFoi, grupeazaA4, corecteazaNume, MAX_NUME_PE_FOAIE };
 });

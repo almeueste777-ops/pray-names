@@ -1,18 +1,33 @@
 // Pray Names – interfața: încărcare PDF/poze → citire (OCR cu model de vedere) → verificare → foi A6 de tipar, 4 pe A4.
-import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs';
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
-
 const $ = s => document.querySelector(s);
 const CHEIE_LOT = 'pray-names-lot', CHEIE_SET = 'pray-names-setari';
-const DPI = 150;   // destul pentru citirea scrisului; poza ~1 MB/pagină
+const DPI = 150;   // destul pentru citirea scrisului; poza ~300 KB–1 MB/pagină
+const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs';
+const PDFJS_WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
 
 let lot = { pagini: [] };
 const setari = incarcaSetari();
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const idNou = () => 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+// ---------- pozele stau în IndexedDB (localStorage nu le încape); textul citit în localStorage ----------
+const DB = { nume: 'pray-names', magazin: 'poze' };
+function db() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open(DB.nume, 1);
+    r.onupgradeneeded = () => r.result.createObjectStore(DB.magazin);
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  });
+}
+async function pozaPune(id, img) { try { const d = await db(); await new Promise((res, rej) => { const t = d.transaction(DB.magazin, 'readwrite'); t.objectStore(DB.magazin).put(img, id); t.oncomplete = res; t.onerror = () => rej(t.error); }); } catch (e) { console.warn('poza nesalvată', e); } }
+async function pozaIa(id) { try { const d = await db(); return await new Promise((res, rej) => { const r = d.transaction(DB.magazin).objectStore(DB.magazin).get(id); r.onsuccess = () => res(r.result || null); r.onerror = () => rej(r.error); }); } catch { return null; } }
+async function pozaSterge(id) { try { const d = await db(); d.transaction(DB.magazin, 'readwrite').objectStore(DB.magazin).delete(id); } catch {} }
+async function pozeGoleste() { try { const d = await db(); d.transaction(DB.magazin, 'readwrite').objectStore(DB.magazin).clear(); } catch {} }
 
 // ---------- setări ----------
 function incarcaSetari() { try { return Object.assign({ furnizor: 'gemini', cheie: '', model: '' }, JSON.parse(localStorage.getItem(CHEIE_SET) || '{}')); } catch { return { furnizor: 'gemini', cheie: '', model: '' }; } }
 function salveazaSetari() { try { localStorage.setItem(CHEIE_SET, JSON.stringify(setari)); } catch {} }
-$('#btn-setari').onclick = () => { $('#set-furnizor').value = setari.furnizor; $('#set-cheie').value = setari.cheie; $('#set-model').value = setari.model; $('#setari').showModal(); };
+$('#btn-setari').onclick = () => { const d = $('#setari'); d.returnValue = ''; $('#set-furnizor').value = setari.furnizor; $('#set-cheie').value = setari.cheie; $('#set-model').value = setari.model; d.showModal(); };
 $('#setari').addEventListener('close', () => {
   if ($('#setari').returnValue !== 'ok') return;
   setari.furnizor = $('#set-furnizor').value; setari.cheie = $('#set-cheie').value.trim(); setari.model = $('#set-model').value.trim();
@@ -31,22 +46,33 @@ function aratăPas(n) {
 
 // ---------- pasul 1: încărcare ----------
 $('#btn-alege').onclick = () => $('#fisiere').click();
-$('#fisiere').onchange = e => adaugaFisiere([...e.target.files]);
+$('#fisiere').onchange = e => { const f = [...e.target.files]; e.target.value = ''; adaugaFisiere(f); };
 const zona = $('#zona-incarcare');
 zona.ondragover = e => { e.preventDefault(); zona.classList.add('peste'); };
 zona.ondragleave = () => zona.classList.remove('peste');
 zona.ondrop = e => { e.preventDefault(); zona.classList.remove('peste'); adaugaFisiere([...e.dataTransfer.files]); };
 
 async function adaugaFisiere(fisiere) {
+  const erori = [];
   for (const f of fisiere) {
-    if (f.type === 'application/pdf') await adaugaPdf(f);
-    else if (f.type.startsWith('image/')) lot.pagini.push(paginaNoua(await imagineDinFisier(f), f.name));
+    try {
+      if (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)) await adaugaPdf(f);
+      else if (f.type.startsWith('image/')) await adaugaPagina(await imagineDinFisier(f), f.name);
+      else erori.push(`${f.name}: nu e PDF sau poză`);
+    } catch (e) { console.error(e); erori.push(`${f.name}: ${e.message}`); }
   }
-  salveazaLot(); deseneazaMiniaturi(); actualizeazaButoane();
+  $('#progres').textContent = erori.length ? 'Nu s-au putut încărca: ' + erori.join('; ') : '';
+  salveazaLot(); deseneazaMiniaturi(); actualizeazaButoane(erori.length === 0);
 }
-function paginaNoua(img, sursa) { return { img, sursa, stare: 'necitit', data: null, dataText: null, sectiuni: [], observatii: '' }; }
+async function adaugaPagina(img, sursa) {
+  const p = { id: idNou(), img, sursa, stare: 'necitit', data: null, dataText: null, dataAlta: null, sectiuni: [], observatii: '' };
+  lot.pagini.push(p); await pozaPune(p.id, img); return p;
+}
 
 async function adaugaPdf(f) {
+  $('#progres').textContent = `Se deschide ${f.name}…`;
+  const pdfjsLib = await import(PDFJS);
+  pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
   const pdf = await pdfjsLib.getDocument({ data: await f.arrayBuffer() }).promise;
   for (let i = 1; i <= pdf.numPages; i++) {
     $('#progres').textContent = `Pagina ${i}/${pdf.numPages} din ${f.name}…`;
@@ -54,17 +80,20 @@ async function adaugaPdf(f) {
     const vp = pag.getViewport({ scale: DPI / 72 });
     const c = document.createElement('canvas'); c.width = vp.width; c.height = vp.height;
     await pag.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
-    lot.pagini.push(paginaNoua(c.toDataURL('image/jpeg', 0.85), `${f.name} p.${i}`));
+    await adaugaPagina(c.toDataURL('image/jpeg', 0.85), `${f.name} p.${i}`);
+    deseneazaMiniaturi();
   }
-  $('#progres').textContent = '';
 }
 function imagineDinFisier(f) {
-  return new Promise(res => {
-    const img = new Image(); img.onload = () => {
-      const scara = Math.min(1, 1600 / Math.max(img.width, img.height));
-      const c = document.createElement('canvas'); c.width = img.width * scara; c.height = img.height * scara;
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => {
+      const scara = Math.min(1, 1800 / Math.max(img.width, img.height));
+      const c = document.createElement('canvas'); c.width = Math.round(img.width * scara); c.height = Math.round(img.height * scara);
       c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(img.src); res(c.toDataURL('image/jpeg', 0.85));
-    }; img.src = URL.createObjectURL(f);
+    };
+    img.onerror = () => { URL.revokeObjectURL(img.src); rej(new Error('poza nu poate fi citită de browser (HEIC? fișier stricat?)')); };
+    img.src = URL.createObjectURL(f);
   });
 }
 
@@ -73,50 +102,52 @@ function deseneazaMiniaturi() {
   lot.pagini.forEach((p, i) => {
     const d = document.createElement('div'); d.className = 'miniatura';
     const stare = { necitit: '— necitit', citire: '⏳ se citește', citit: '✓ citit', eroare: '✗ eroare' }[p.stare];
-    d.innerHTML = `<img src="${p.img}" alt="pagina ${i + 1}"><div>${i + 1}. <span class="stare-${p.stare}">${stare}</span></div><button class="secundar" data-sterge="${i}">✕</button>`;
-    d.querySelector('img').onclick = () => lupa(p.img);
-    d.querySelector('button').onclick = () => { lot.pagini.splice(i, 1); salveazaLot(); deseneazaMiniaturi(); actualizeazaButoane(); };
+    d.innerHTML = `${p.img ? `<img alt="pagina ${i + 1}">` : '<div class="fara-poza">poza lipsește</div>'}<div>${i + 1}. <span class="stare-${p.stare}">${stare}</span></div>
+      <button class="secundar" title="șterge pagina">✕</button>${p.stare === 'citit' ? ' <button class="secundar" title="citește din nou">↻</button>' : ''}`;
+    if (p.img) { d.querySelector('img').src = p.img; d.querySelector('img').onclick = () => lupa(p.img); }
+    const [bs, br] = d.querySelectorAll('button');
+    bs.onclick = () => { lot.pagini.splice(i, 1); pozaSterge(p.id); salveazaLot(); deseneazaMiniaturi(); actualizeazaButoane(); };
+    if (br) br.onclick = () => { p.stare = 'necitit'; salveazaLot(); deseneazaMiniaturi(); actualizeazaButoane(); };
     m.appendChild(d);
   });
 }
 function lupa(src) { $('#lupa-img').src = src; $('#lupa').showModal(); }
-function actualizeazaButoane() {
-  const necitite = lot.pagini.filter(p => p.stare !== 'citit').length;
+function actualizeazaButoane(stergeMesaj = true) {
+  const necitite = lot.pagini.filter(p => p.stare !== 'citit' && p.img).length;
   $('#btn-citeste').disabled = !necitite || !setari.cheie;
   $('#btn-citeste').textContent = necitite && necitite < lot.pagini.length ? `🔍 Citește paginile rămase (${necitite})` : '🔍 Citește toate paginile';
-  $('#progres').textContent = lot.pagini.length && !setari.cheie ? 'Pune cheia API în ⚙ ca să poți citi.' : '';
+  if (lot.pagini.length && !setari.cheie) $('#progres').textContent = 'Pune cheia API în ⚙ ca să poți citi.';
+  else if (stergeMesaj) $('#progres').textContent = '';
 }
-$('#btn-goleste').onclick = () => { if (confirm('Ștergi tot lotul încărcat?')) { lot = { pagini: [] }; salveazaLot(); deseneazaMiniaturi(); actualizeazaButoane(); } };
+$('#btn-goleste').onclick = () => { if (confirm('Ștergi tot lotul încărcat?')) { lot = { pagini: [] }; pozeGoleste(); salveazaLot(); deseneazaMiniaturi(); actualizeazaButoane(); } };
 
 // ---------- citirea ----------
 $('#btn-citeste').onclick = async () => {
   $('#btn-citeste').disabled = true;
-  const deCitit = lot.pagini.map((p, i) => [p, i]).filter(([p]) => p.stare !== 'citit');
+  const deCitit = lot.pagini.map((p, i) => [p, i]).filter(([p]) => p.stare !== 'citit' && p.img);
   let n = 0;
   for (const [p, i] of deCitit) {
     p.stare = 'citire'; deseneazaMiniaturi();
     $('#progres').textContent = `Se citește pagina ${i + 1} (${++n}/${deCitit.length})…`;
     try {
       const r = await OCR.citestePagina(p.img, setari);
-      aplicaCitirea(p, r); p.stare = 'citit';
+      aplicaCitirea(p, r); p.stare = 'citit'; p.eroare = '';
     } catch (e) { p.stare = 'eroare'; p.eroare = e.message; console.error(e); }
     salveazaLot(); deseneazaMiniaturi();
   }
   const erori = lot.pagini.filter(p => p.stare === 'eroare').length;
   $('#progres').textContent = erori ? `Gata, dar ${erori} pagini cu eroare (apasă din nou ca să reîncerci).` : 'Gata. Treci la pasul 2 · Verifică.';
-  actualizeazaButoane();
+  actualizeazaButoane(false);
   if (!erori) aratăPas(2);
 };
 function aplicaCitirea(p, r) {
   p.ocr = r;
-  p.dataText = r.data_albastra || (r.alte_date && r.alte_date[0]) || null;
-  p.data = REGULI.parseazaData(p.dataText) || p.data;
+  p.dataText = r.data_albastra || null;                       // DOAR data albastră intră pe foaie
+  p.dataAlta = (r.alte_date && r.alte_date.length) ? r.alte_date.join(', ') : null;   // se arată ca sugestie
+  p.data = REGULI.parseazaData(p.dataText) || null;
   p.observatii = r.observatii || '';
-  p.sectiuni = r.sectiuni.map(s => {
-    const sec = REGULI.proceseazaSectiune(s);
-    sec.casa = sec.casa || /cu\s+(fii|copii|nepo|toat[ăa]\s+casa)/i.test(p.observatii);
-    return sec;
-  }).filter(s => s.nume.length);
+  p.sectiuni = (r.sectiuni || []).flatMap(s => REGULI.proceseazaSectiuni(s)).filter(s => s.nume.length);
+  if (p.sectiuni.length && /\bcu\s+(fii|copii|nepo|toat[ăa]\s+casa)/i.test(p.observatii)) p.sectiuni[0].casa = true;
   if (!p.sectiuni.length) p.sectiuni = [{ categorie: 'vii', nume: [], casa: false }];
 }
 
@@ -126,18 +157,26 @@ function deseneazaVerificare() {
   lot.pagini.forEach((p, i) => {
     const d = document.createElement('div'); d.className = 'pagina-verif';
     const dreapta = document.createElement('div');
-    dreapta.innerHTML = `<h3>Pagina ${i + 1} <span class="mic">(${p.sursa})</span></h3>
-      <label>Data pe foaie: <input type="text" data-camp="data" value="${p.data || ''}" placeholder="zz.ll.aaaa" size="10"> <span class="mic">citit: „${p.dataText || '—'}"</span></label>
-      ${p.stare === 'eroare' ? `<p class="eroare">Eroare la citire: ${p.eroare}</p>` : ''}
-      ${p.stare === 'necitit' ? `<p class="eroare">Pagina nu a fost citită încă (pasul 1).</p>` : ''}`;
-    dreapta.querySelector('[data-camp=data]').onchange = e => { p.data = e.target.value.trim() || null; salveazaLot(); };
+    dreapta.innerHTML = `<h3>Pagina ${i + 1} <span class="mic">(${esc(p.sursa)})</span></h3>
+      <label>Data pe foaie: <input type="text" data-camp="data" value="${esc(p.data || '')}" placeholder="zz.ll.aaaa" size="10">
+        <span class="mic">albastru: „${esc(p.dataText || '—')}"${p.dataAlta ? `; alt pix: „${esc(p.dataAlta)}" (nu se pune singură)` : ''}</span></label>
+      <span class="mic eroare" data-camp="data-eroare"></span>
+      ${p.stare === 'eroare' ? `<p class="eroare">Eroare la citire: ${esc(p.eroare)}</p>` : ''}
+      ${p.stare !== 'citit' && p.stare !== 'eroare' ? `<p class="eroare">Pagina nu a fost citită încă (pasul 1).</p>` : ''}`;
+    const inpData = dreapta.querySelector('[data-camp=data]');
+    inpData.onchange = () => {
+      const t = inpData.value.trim(), n = REGULI.parseazaData(t);
+      dreapta.querySelector('[data-camp=data-eroare]').textContent = t && !n ? 'Data nu e înțeleasă; scrie zz.ll.aaaa' : '';
+      p.data = n; if (n) inpData.value = n; salveazaLot();
+    };
     p.sectiuni.forEach((s, k) => dreapta.appendChild(sectiuneUI(p, s, k)));
     const plus = document.createElement('button'); plus.className = 'secundar'; plus.textContent = '+ secțiune (altă categorie pe aceeași foaie)';
     plus.onclick = () => { p.sectiuni.push({ categorie: 'adormiti', nume: [], casa: false }); salveazaLot(); deseneazaVerificare(); };
     dreapta.appendChild(plus);
     if (p.observatii) { const o = document.createElement('div'); o.className = 'obs'; o.textContent = 'Altceva pe foaie (nu se tipărește): ' + p.observatii; dreapta.appendChild(o); }
-    const img = document.createElement('img'); img.src = p.img; img.alt = `pagina ${i + 1}`; img.onclick = () => lupa(p.img);
-    d.appendChild(img); d.appendChild(dreapta); v.appendChild(d);
+    if (p.img) { const img = document.createElement('img'); img.src = p.img; img.alt = `pagina ${i + 1}`; img.onclick = () => lupa(p.img); d.appendChild(img); }
+    else { const g = document.createElement('div'); g.className = 'fara-poza'; g.textContent = 'Poza nu mai e în browser; textul citit a rămas.'; d.appendChild(g); }
+    d.appendChild(dreapta); v.appendChild(d);
   });
 }
 function sectiuneUI(p, s, k) {
@@ -158,8 +197,8 @@ function sectiuneUI(p, s, k) {
   s.nume.forEach((n, j) => {
     const r = document.createElement('div'); r.className = 'nume-rand';
     const nesigur = !n.sigur || n.corectat;
-    r.innerHTML = `<span class="mic">${j + 1}.</span><input type="text" class="${nesigur ? 'nesigur' : ''}" value="${(n.nume || '').replace(/"/g, '&quot;')}">
-      <span class="orig" title="cum a citit modelul">${nesigur && n.original ? '„' + n.original + '"' : ''}</span><button class="secundar" title="șterge">✕</button>`;
+    r.innerHTML = `<span class="mic">${j + 1}.</span><input type="text" class="${nesigur ? 'nesigur' : ''}" value="${esc(n.nume)}">
+      <span class="orig" title="cum a citit modelul">${nesigur && n.original ? '„' + esc(n.original) + '"' : ''}</span><button class="secundar" title="șterge">✕</button>`;
     const inp = r.querySelector('input');
     inp.onchange = () => { n.nume = inp.value.trim(); n.sigur = true; n.corectat = false; inp.classList.remove('nesigur'); salveazaLot(); };
     r.querySelector('button').onclick = () => { s.nume.splice(j, 1); salveazaLot(); deseneazaVerificare(); };
@@ -168,7 +207,7 @@ function sectiuneUI(p, s, k) {
   return d;
 }
 $('#btn-data-toate').onclick = () => {
-  const d = $('#data-implicita').value.trim(); if (!d) return;
+  const d = REGULI.parseazaData($('#data-implicita').value.trim()); if (!d) { alert('Scrie data ca zz.ll.aaaa'); return; }
   lot.pagini.forEach(p => { if (!p.data) p.data = d; }); salveazaLot(); deseneazaVerificare();
 };
 
@@ -176,7 +215,8 @@ $('#btn-data-toate').onclick = () => {
 function deseneazaFoi() {
   const foi = REGULI.construiesteFoi(lot.pagini);
   const a4uri = REGULI.grupeazaA4(foi);
-  $('#rezumat-foi').textContent = `${foi.length} foi A6 pe ${a4uri.length} coli A4`;
+  const faraData = foi.filter(f => !f.data).length;
+  $('#rezumat-foi').textContent = `${foi.length} foi A6 pe ${a4uri.length} coli A4` + (faraData ? ` — ATENȚIE: ${faraData} foi fără dată (pasul 2)` : '');
   const cont = $('#foi'); cont.innerHTML = '';
   const taiere = $('#linii-taiere').checked;
   a4uri.forEach(grup => {
@@ -184,10 +224,9 @@ function deseneazaFoi() {
     for (let k = 0; k < 4; k++) {
       const f = grup[k]; const d = document.createElement('div'); d.className = 'a6';
       if (f) {
-        const marime = f.nume.length <= 8 ? 20 : f.nume.length <= 12 ? 17 : 14;
         d.innerHTML = `<div class="titlu ${f.categorie}">${f.categorie === 'adormiti' ? 'ADORMIȚI' : 'VII'}</div>
           ${f.continuare ? '<div class="cont">(continuare)</div>' : ''}
-          <ol class="lista" style="font-size:${marime}pt">${f.nume.map(n => `<li>${esc(n)}</li>`).join('')}</ol>
+          <ol class="lista m20">${f.nume.map(n => `<li>${esc(n)}</li>`).join('')}</ol>
           ${f.casa ? '<div class="casa">cu toată casa lor</div>' : ''}
           <div class="data">${esc(f.data || '')}</div>`;
       }
@@ -195,25 +234,48 @@ function deseneazaFoi() {
     }
     cont.appendChild(a4);
   });
+  // micșorează litera până încape totul în A6 (numele lungi se împachetează, deci măsurăm, nu numărăm)
+  for (const a6 of cont.querySelectorAll('.a6')) {
+    const l = a6.querySelector('.lista'); if (!l) continue;
+    for (const m of ['m20', 'm17', 'm14', 'm12', 'm11', 'm10']) {
+      l.className = 'lista ' + m;
+      if (a6.scrollHeight <= a6.clientHeight + 1) break;
+    }
+  }
 }
-function esc(s) { return String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
 $('#btn-tipareste').onclick = () => window.print();
 $('#linii-taiere').onchange = deseneazaFoi;
 
-// ---------- persistență (fără poze, ca să încapă în localStorage) ----------
+// ---------- persistență: textul în localStorage (fără poze), pozele în IndexedDB ----------
 function salveazaLot() {
-  try { localStorage.setItem(CHEIE_LOT, JSON.stringify({ pagini: lot.pagini.map(p => ({ ...p, img: p.img.length < 300000 ? p.img : null })) })); } catch {}
+  try { localStorage.setItem(CHEIE_LOT, JSON.stringify({ pagini: lot.pagini.map(p => ({ ...p, img: undefined, ocr: undefined })) })); }
+  catch (e) { $('#progres').textContent = 'Nu pot salva lotul în browser (spațiu plin?). Nu închide pagina până nu tipărești.'; console.warn(e); }
 }
-(function incarcaLot() {
-  try { const l = JSON.parse(localStorage.getItem(CHEIE_LOT) || 'null'); if (l && l.pagini) { l.pagini = l.pagini.filter(p => p.img); lot = l; } } catch {}
+async function incarcaLot() {
+  try {
+    const l = JSON.parse(localStorage.getItem(CHEIE_LOT) || 'null'); if (!l || !l.pagini) return;
+    for (const p of l.pagini) { p.id = p.id || idNou(); p.img = await pozaIa(p.id); if (p.stare === 'citire') p.stare = 'necitit'; }
+    lot = l;
+  } catch (e) { console.warn(e); }
+}
+
+// Probă fără cheie, doar local: ?proba=probe/lot.json cu [{img, sursa, raspuns}] unde raspuns = JSON-ul pe care l-ar da modelul.
+async function incarcaProba() {
+  const u = new URLSearchParams(location.search), proba = u.get('proba'), pdf = u.get('pdf');
+  const local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+  if (local && pdf && /^probe\/[\w.-]+\.pdf$/.test(pdf)) {   // probă pentru calea pdf.js: încarcă un PDF din probe/ ca și cum ar fi ales din fereastră
+    const b = await (await fetch(pdf)).blob();
+    await adaugaFisiere([new File([b], pdf.split('/').pop(), { type: 'application/pdf' })]);
+    document.body.dataset.pdfGata = String(lot.pagini.length); return true;
+  }
+  if (!proba || !local || !/^probe\/[\w.-]+\.json$/.test(proba)) return false;
+  const pag = await (await fetch(proba)).json();
+  lot = { pagini: pag.map(x => { const p = { id: idNou(), img: x.img, sursa: x.sursa, stare: 'citit', data: null, sectiuni: [], observatii: '' }; aplicaCitirea(p, x.raspuns); return p; }) };
+  aratăPas(+(u.get('pas') || 2)); return true;
+}
+
+(async () => {
+  if (!(await incarcaProba())) await incarcaLot();
+  deseneazaMiniaturi(); actualizeazaButoane();
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
 })();
-
-// Probă fără cheie: ?proba=probe/lot.json cu [{img, sursa, raspuns}] unde raspuns = JSON-ul pe care l-ar da modelul.
-const proba = new URLSearchParams(location.search).get('proba');
-if (proba) fetch(proba).then(r => r.json()).then(pag => {
-  lot = { pagini: pag.map(x => { const p = paginaNoua(x.img, x.sursa); aplicaCitirea(p, x.raspuns); p.stare = 'citit'; return p; }) };
-  deseneazaMiniaturi(); actualizeazaButoane(); aratăPas(+(new URLSearchParams(location.search).get('pas') || 2));
-});
-
-deseneazaMiniaturi(); actualizeazaButoane();
-if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});

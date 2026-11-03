@@ -1,5 +1,7 @@
 # Pray Names
 
+Live: https://almeueste777-ops.github.io/pray-names/
+
 PWA care transformă pomelnicele scrise de mână (scanate în PDF sau poze) în foi A6 de tipar, câte 4 pe o coală A4, cu categoria (Vii / ✝ Adormiți), numele și data.
 
 ## Cum se folosește
@@ -23,6 +25,7 @@ PWA care transformă pomelnicele scrise de mână (scanate în PDF sau poze) în
 - `ocr.js` – apelul la model (Gemini sau Claude) direct din browser, cu promptul de transcriere.
 - `reguli.js` – regulile de mai sus, funcții pure; `nume.js` – dicționarul de prenume cu sex.
 - `test/reguli.test.js` – probe pe rândurile reale din primele 9 pomelnice: `node test/reguli.test.js`.
+- `test/cdp.mjs` – probă în Edge headless prin CDP (consolă + așteptare pe condiție): `node test/cdp.mjs <url> <expresie> <poza.png>`.
 - `probe/` (negit) – lot de probă din scanări reale: `python probe/fa-lot.py <pdf>` apoi `index.html?proba=probe/lot.json&pas=3`.
 - `sw.js`, `manifest.webmanifest` – PWA, merge offline (mai puțin citirea).
 

@@ -55,7 +55,37 @@ const foi = R.construiesteFoi([{ data: '23.11.2026', sectiuni: [
   R.proceseazaSectiune({ titlu: 'Vii', linii: ['Maria-Simona', 'Gheorghe-Adrian', 'Constantin'] }), sect] }]);
 eq(foi.map(f => [f.categorie, f.nume.length, f.data]), [['vii', 3, '23.11.2026'], ['adormiti', 2, '23.11.2026']], 'două foi dintr-o pagină');
 const multe = R.construiesteFoi([{ data: 'x', sectiuni: [{ categorie: 'vii', casa: true, nume: Array.from({ length: 20 }, (_, i) => ({ nume: 'N' + i })) }] }]);
-eq(multe.map(f => [f.nume.length, f.continuare, f.casa]), [[16, false, false], [4, true, true]], 'continuare');
+eq(multe.map(f => [f.nume.length, f.continuare, f.casa]), [[10, false, false], [10, true, true]], 'continuare');
 eq(R.grupeazaA4(Array(9).fill({})).map(a => a.length), [4, 4, 1], 'A4 câte 4');
+
+// --- cazurile din auditul Sonnet (3.11.2026) ---
+eq(L('Pr. Ioan'), 'Pr. Ioan', 'titlu preot');
+eq(L('monahia Teodora'), 'Monahia Teodora', 'titlu monahie');
+eq(L('mon. Teodora'), 'Monah Teodora', 'mon. nu devine Ion');
+eq(L('Ion și Maria'), 'Ion-Maria', '„și" nu e nume');
+eq(L('Ion și Gheorghe'), 'Ion', '„și" + același sex');
+eq(L('Ion 50 de lei'), 'Ion', 'suma după nume');
+const mf = R.proceseazaLinie('Maria cu fiica Ana'); eq([mf.nume, mf.casa], ['Maria', true], 'cu fiica → casa, un singur nume');
+const inp = R.proceseazaLinie('Ioan cu nepoților'); eq([inp.nume, inp.casa], ['Ioan', true], 'cu nepoților');
+const cf = R.proceseazaLinie('cu fii'); eq([cf.nume, cf.casa], ['', true], 'rând doar „cu fii" păstrează casa');
+eq(L('Ioan Gheorghe, Maria'), 'Ioan-Maria', '3 nume amestecate → primul de fiecare sex');
+eq(L('Ioniță'), 'Ioniță', 'nume nou în dicționar');
+eq(L('Mărioara'), 'Mărioara', 'nu mai devine Mariana');
+const sc = R.proceseazaLinie('Ana'); eq([sc.nume, sc.sigur], ['Ana', true], 'nume scurt sigur');
+const nec = R.proceseazaLinie('Xyzw'); eq([nec.nume, nec.sigur], ['Xyzw', false], 'necunoscut scurt: fără corecție fuzzy');
+eq(R.categorieDinTitlu('Acatist + 50 lei'), 'vii', 'plusul din titlu nu înseamnă cruce');
+const sv = R.proceseazaSectiuni({ titlu: 'Vii', categorie: 'vii', cruce: false, linii: ['Ion', '+ Maria', 'Gheorghe'] });
+eq(sv.map(s => [s.categorie, s.nume.map(n => n.nume)]), [['vii', ['Ion', 'Gheorghe']], ['adormiti', ['Maria']]], 'crucea pe nume mută numele la adormiți');
+const sx = R.proceseazaSectiuni({ titlu: 'Vii', categorie: 'vii', cruce: true, linii: ['Ion'] });
+eq(sx[0].categorie, 'adormiti', 'crucea lângă titlu bate categoria modelului');
+eq(R.proceseazaSectiuni(null), [], 'secțiune null');
+eq(R.proceseazaSectiuni({ linii: [null, 'Ion'] })[0].nume.length, 1, 'linie null ignorată');
+eq(R.parseazaData('nov 5', azi), '05.11.2026', 'luna înainte');
+eq(R.parseazaData('25 de octombrie', azi), '25.10.2026', 'cu „de"');
+eq(R.parseazaData('20oct', azi), '20.10.2026', 'lipit');
+eq(R.parseazaData('31.02', azi), null, '31 februarie nu există');
+eq(R.parseazaData('05.11.2026', azi), '05.11.2026', 'deja normalizată');
+const ech = R.construiesteFoi([{ data: 'x', sectiuni: [{ categorie: 'vii', casa: true, nume: Array.from({ length: 17 }, (_, i) => ({ nume: 'N' + i })) }] }]);
+eq(ech.map(f => [f.nume.length, f.continuare, f.casa]), [[9, false, false], [8, true, true]], 'continuare echilibrată 9+8');
 console.log(`${ok} ok, ${rau} pică`);
 process.exit(rau ? 1 : 0);

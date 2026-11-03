@@ -20,7 +20,7 @@ Radu Rareș Raul Răzvan Relu Remus Robert Romeo Romulus Rusalin
 Sabin Samuel Sandu Sava Sebastian Sergiu Sever Silviu Simion Sorin Spiridon Stan Stancu Stelian Ștefan Șerban
 Tănase Teodor Teofil Tiberiu Titus Toader Toma Traian Tudor
 Valentin Valeriu Valer Vasile Vicențiu Victor Viorel Virgil Vlad Vladimir Vlăduț
-Zaharia Zamfir
+Zaharia Zamfir Atanasie Ilarie Ioniță Serafim Paisie Visarion Nicodim Teofan Nectarie Cleopa Iustinian Ignatie Macarie Gherasim Chiril Metodie Calinic Dionisie Evloghie Nifon Antim Sofronie Varlaam Daniil Timotei Savatie Siluan Gavriil Costea Pintilie Dragomir Ovidius Viorel
 `;
 const FEMININE = `
 Ada Adela Adelina Adina Adriana Agata Agnes Alexandra Alexia Alina Amalia Ana Anamaria Anca Anda Andra Andreea Andreia Aneta Angela Angelica Anghelina Anica Anișoara Antonia Antoaneta Aurelia Aurica Aurora
@@ -41,7 +41,7 @@ Rada Rafila Raluca Ramona Rebeca Renata Roberta Rodica Romanița Roxana Ruxandra
 Sabina Safta Sanda Sara Saveta Savina Silvia Silviana Simona Sofia Sonia Sorina Speranța Stana Stanca Steliana Stela Steluța Ștefana Ștefania Suzana Svetlana
 Tamara Tania Tatiana Teodora Teona Tinca Tudora
 Valentina Valeria Valerica Vasilica Vasilena Veronica Veta Victoria Viorica Violeta Virginia Vera
-Zamfira Zenovia Zina Zoe Zoia
+Zamfira Zenovia Zina Zoe Zoia Pelaghia Smaranda Varvara Lia Maricica Cleopatra Mărioara Gheorghița Liana Sevastia Dumitrița Mihaela Ecaterina Agafia Evdochia Filoteia Melana Marghioala Catrina Tudosia Teofana Xenia Olguța Nuți Cristiana Georgina Verginia Anuța Ileana Iustina Casiana Marinela Lucica Paulina Frosina Anastasia
 `;
 function split(s) { return s.split(/\s+/).filter(Boolean); }
 const NUME = { m: split(MASCULINE), f: split(FEMININE) };

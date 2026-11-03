@@ -53,23 +53,27 @@ dialog input, dialog select { width: 100%; margin-top: 4px; }
 #lupa img { max-width: 85vw; max-height: 80vh; }
 
 /* Pasul 3: foile A4 cu 4 A6 */
-.a4 { width: 210mm; height: 297mm; background: #fff; color: #000; display: grid; grid-template-columns: 105mm 105mm; grid-template-rows: 148.5mm 148.5mm; margin: 0 auto 10mm; box-shadow: 0 2px 8px rgba(0,0,0,.2); page-break-after: always; break-after: page; }
-.a6 { width: 105mm; height: 148.5mm; padding: 9mm 8mm 7mm; display: flex; flex-direction: column; overflow: hidden; font-family: "Times New Roman", Georgia, serif; }
+@page { size: A4 portrait; margin: 0; }
+.a4 { width: 210mm; height: 296.5mm; background: #fff; color: #000; display: grid; grid-template-columns: 105mm 105mm; grid-template-rows: 148.25mm 148.25mm; margin: 0 auto 10mm; box-shadow: 0 2px 8px rgba(0,0,0,.2); page-break-after: always; break-after: page; }
+.a4:last-child { page-break-after: auto; break-after: auto; }
+.a6 { width: 105mm; height: 148.25mm; padding: 9mm 8mm 7mm; display: flex; flex-direction: column; overflow: hidden; font-family: "Times New Roman", Georgia, serif; }
 .taiere .a6:nth-child(1), .taiere .a6:nth-child(3) { border-right: 1px dashed #999; }
 .taiere .a6:nth-child(1), .taiere .a6:nth-child(2) { border-bottom: 1px dashed #999; }
 .a6 .titlu { text-align: center; font-size: 18pt; font-weight: 700; letter-spacing: .08em; margin-bottom: 3mm; }
 .a6 .titlu.adormiti::before { content: "✝ "; }
 .a6 .lista { flex: 1; margin: 0; padding: 0 0 0 4mm; list-style: none; }
 .a6 .lista li { line-height: 1.25; }
+.a6 .lista.m20 { font-size: 20pt; } .a6 .lista.m17 { font-size: 17pt; } .a6 .lista.m14 { font-size: 14pt; }
+.a6 .lista.m12 { font-size: 12pt; } .a6 .lista.m11 { font-size: 11pt; } .a6 .lista.m10 { font-size: 10pt; }
+.fara-poza { aspect-ratio: 210/297; display: flex; align-items: center; justify-content: center; border: 1px dashed var(--linie); border-radius: 4px; font-size: 13px; opacity: .7; padding: 8px; text-align: center; }
 .a6 .casa { font-style: italic; text-align: center; margin-top: 2mm; }
 .a6 .data { text-align: right; font-size: 11pt; margin-top: 2mm; }
 .a6 .cont { font-size: 9pt; opacity: .7; text-align: center; }
 @media print {
-  @page { size: A4 portrait; margin: 0; }
   body { background: #fff; }
   .bara, .caseta-ghid, .rand-actiuni, #pas-1, #pas-2 { display: none !important; }
   main { max-width: none; padding: 0; margin: 0; }
   #pas-3 { display: block !important; }
   .a4 { box-shadow: none; margin: 0; }
 }
-@media (max-width: 700px) { .pagina-verif { grid-template-columns: 1fr; } .a4 { transform: scale(.45); transform-origin: top left; height: 134mm; } }
+@media screen and (max-width: 700px) { .pagina-verif { grid-template-columns: 1fr; } .a4 { transform: scale(.45); transform-origin: top left; height: 134mm; } }
