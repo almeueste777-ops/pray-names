@@ -24,3 +24,5 @@
 
 ## Reguli adăugate după 0.4
 - Foile fără dată primesc, la tipărire, data de azi + 7 zile (4.11.2026).
+
+- 4 / 6 / 8 pomelnice pe coală, la alegere, în pasul 3 (4.11.2026). SPECIFICATIE.md = promptul complet pentru Gemini/Antigravity (copie pe Desktop).
