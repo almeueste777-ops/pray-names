@@ -20,6 +20,7 @@
 - Instalarea ca PWA și tipărirea de pe imprimanta ei.
 
 ## Următorii pași
-1. Otilia face cheia Gemini (gratuit) → probă pe cele 9 pagini reale → numărăm greșelile pe nume.
-2. Dacă Gemini greșește mult la scrisul urât (pag. 7), probăm Claude.
-3. De întrebat-o: „Ana-Maria" e o persoană (nume compus) sau două? Regula actuală o face „Ana".
+1. Ea tipărește primul teanc real și spune cum arată pe hârtie (chenar, mărime, tăiere).
+
+## Reguli adăugate după 0.4
+- Foile fără dată primesc, la tipărire, data de azi + 7 zile (4.11.2026).
