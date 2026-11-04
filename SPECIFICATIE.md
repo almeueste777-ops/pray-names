@@ -104,7 +104,12 @@ Dacă un pomelnic are mai multe nume decât maximul, se continuă pe foi marcate
 
 ## 6b. Foaia‑calendar de la începutul teancului
 
-Opțiune în pasul 3: „foaie‑calendar la început, anul ____". Pune PRIMA o coală cu aceeași așezare (4/6/8 cartonașe, același chenar), fiecare cartonaș = **tot anul**: anul ca titlu, cele 12 luni pe o grilă (3 × 4 la A6; 4 × 3 la 99 × 105; 3 × 4 la A7; 2 × 6 la 70 × 148), fiecare lună cu numele ei, capul de tabel L M M J V S D (săptămâna începe luni), zilele numerotate în celule mici cu contur gri deschis (ca să se poată bifa cu pixul), **duminicile cu roșu**. Fontul cifrelor: Atkinson Hyperlegible / Inter, cifre tabelare, 5,6 pt la A6 (mai mici la cartonașele mici).
+Opțiune în pasul 3: „foaie‑calendar la început (luna tipăririi + 2 luni)". Pune PRIMA o coală cu aceeași așezare (4/6/8 cartonașe, același chenar). Fiecare cartonaș arată **exact 3 luni: luna în care se tipărește și următoarele două**, una sub alta, fiecare cu numele lunii și anul („Noiembrie 2026"), capul de tabel L M M J V S D (săptămâna începe luni), zilele numerotate în **celule mari** cu contur gri (5,2 mm înălțime la A6; 3,4–3,6 mm la cartonașele mici), ca să se poată bifa cu pixul; **duminicile cu roșu**. Fontul cifrelor: Atkinson Hyperlegible / Inter, cifre tabelare, 8,5 pt la A6.
+
+## 6c. Viața paginilor încărcate și viteza
+
+- Paginile încărcate **dispar singure după 24 de ore** de la încărcare (câmpul `creat`), împreună cu pozele lor din IndexedDB; verificarea se face la pornire și o dată pe minut; fiecare miniatură arată „dispare în N h".
+- Pentru fluiditate la 100 de pagini: în grila din pasul 1 se afișează o **miniatură mică** (320 px înălțime, JPEG 70%, ≈ 15 KB) făcută la încărcare și păstrată separat în IndexedDB; **poza mare** (150 dpi) se aduce din IndexedDB doar când e nevoie (mărire, citire, pasul 2, unde întâi apare miniatura, apoi poza mare). localStorage ține doar textul (fără poze). Imaginile au `loading="lazy"` și `decoding="async"`; cardurile folosesc `content-visibility: auto`.
 
 ## 7. Date de probă și rezultate așteptate
 
