@@ -63,7 +63,9 @@ button:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
 
 .miniaturi { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(150px, 44vw), 1fr)); gap: 12px; margin-top: 14px; }
 .miniatura { background: var(--sticla-tare); border: 1px solid rgba(255,255,255,.5); border-radius: var(--raza-mica); padding: 8px; text-align: center; font-size: 13px; box-shadow: var(--umbra); }
-.miniatura img { width: 100%; aspect-ratio: 210/297; object-fit: cover; border-radius: 10px; cursor: zoom-in; }
+.miniatura img { width: 100%; aspect-ratio: 210/297; object-fit: cover; border-radius: 10px; cursor: zoom-in; background: #fff; content-visibility: auto; }
+.miniatura { content-visibility: auto; contain-intrinsic-size: 150px 260px; }
+.pagina-verif { content-visibility: auto; contain-intrinsic-size: 600px 700px; }
 .miniatura button { padding: 3px 10px; font-size: 13px; margin-top: 4px; }
 .stare-citit { color: var(--verde); } .stare-eroare { color: var(--rosu); } .stare-citire { color: var(--gold); }
 .fara-poza { aspect-ratio: 210/297; display: flex; align-items: center; justify-content: center; border: 1px dashed var(--linie); border-radius: 10px; font-size: 13px; opacity: .7; padding: 8px; text-align: center; }
@@ -123,29 +125,24 @@ dialog input, dialog select { width: 100%; margin-top: 6px; }
 .a6 .nume.m22 { font-size: 22pt; } .a6 .nume.m20 { font-size: 20pt; } .a6 .nume.m18 { font-size: 18pt; } .a6 .nume.m16 { font-size: 16pt; }
 .a6 .nume.m14 { font-size: 14pt; } .a6 .nume.m13 { font-size: 13pt; } .a6 .nume.m12 { font-size: 12pt; } .a6 .nume.m11 { font-size: 11pt; } .a6 .nume.m10 { font-size: 10pt; }
 .a6 .nume.col2 { line-height: 1.35; }
-/* foaia-calendar: 12 luni pe cartonaș; cifre mici dar clare, duminica evidențiată */
-.a6 .foaie.calendar { padding: 8mm 8mm 6mm; }
-.a6 .foaie.calendar .titlu { margin: 0 0 1.5mm; font-size: 14pt; letter-spacing: .2em; }
-.a6 .luni { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2mm 2mm; align-content: stretch; min-height: 0; }
-.a6 .luna-nume { text-align: center; font-weight: 600; font-size: 6.5pt; letter-spacing: .04em; margin-bottom: .3mm; }
+/* foaia-calendar: 3 luni una sub alta, celule mari de bifat cu pixul, duminica roșie */
+.a6 .foaie.calendar { padding: 8mm 9mm 7mm; }
+.a6 .luni { flex: 1; display: grid; grid-template-rows: repeat(3, 1fr); gap: 2mm; min-height: 0; }
+.a6 .luna { display: flex; flex-direction: column; min-height: 0; }
+.a6 .luna-nume { text-align: center; font-weight: 600; font-size: 10pt; letter-spacing: .06em; margin-bottom: .6mm; }
 .a6 .luna table { width: 100%; border-collapse: collapse; table-layout: fixed; font-family: "Atkinson Hyperlegible", "Inter", -apple-system, "Segoe UI", system-ui, sans-serif; }
-.a6 .luna th { font-size: 4.6pt; font-weight: 600; color: #777; padding: 0; line-height: 1.2; }
-.a6 .luna td { font-size: 5.6pt; text-align: center; padding: .25mm 0; line-height: 1.25; border: .12mm solid #ddd; height: 2.9mm; font-variant-numeric: tabular-nums; }
+.a6 .luna th { font-size: 6.5pt; font-weight: 600; color: #777; padding: 0 0 .3mm; line-height: 1.2; }
+.a6 .luna td { font-size: 8.5pt; text-align: center; padding: 0; line-height: 1; border: .18mm solid #cfcfcf; height: 5.2mm; font-variant-numeric: tabular-nums; vertical-align: middle; }
 .a6 .luna td:empty { border-color: transparent; }
 .a6 .luna td.dum, .a6 .luna th.dum { color: #b3402f; font-weight: 700; }
-.a6 .luna td, .a6 .luna th, .a6 .luna-nume, .a6 .foaie.calendar .titlu { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-/* 6 pe coală (99 × 105): 4 coloane de luni × 3 rânduri */
-.asz-6 .a6 .foaie.calendar { padding: 7mm 7mm 5mm; } .asz-6 .a6 .foaie.calendar .titlu { font-size: 11pt; margin-bottom: .8mm; }
-.asz-6 .a6 .luni { grid-template-columns: repeat(4, 1fr); gap: .8mm 1.6mm; }
-.asz-6 .a6 .luna-nume { font-size: 5.4pt; margin-bottom: .2mm; } .asz-6 .a6 .luna th { font-size: 4pt; } .asz-6 .a6 .luna td { font-size: 5.1pt; height: 2.5mm; padding: 0; line-height: 1.2; }
-/* 8 pe coală (74 × 105, A7): 3 × 4 */
-.asz-8 .a6 .foaie.calendar { padding: 6.5mm 6mm 4.5mm; } .asz-8 .a6 .foaie.calendar .titlu { font-size: 10pt; margin-bottom: .6mm; }
-.asz-8 .a6 .luni { grid-template-columns: repeat(3, 1fr); gap: .6mm 1.2mm; }
-.asz-8 .a6 .luna-nume { font-size: 4.4pt; margin-bottom: .1mm; } .asz-8 .a6 .luna th { font-size: 3.4pt; } .asz-8 .a6 .luna td { font-size: 4.4pt; height: 2.15mm; padding: 0; line-height: 1.1; border-width: .1mm; }
-/* 6 înguste (70 × 148): 2 × 6 */
-.asz-6i .a6 .foaie.calendar { padding: 7mm 6mm 5mm; } .asz-6i .a6 .foaie.calendar .titlu { font-size: 11pt; margin-bottom: .8mm; }
-.asz-6i .a6 .luni { grid-template-columns: repeat(2, 1fr); gap: .7mm 1.6mm; }
-.asz-6i .a6 .luna-nume { font-size: 5pt; margin-bottom: .1mm; } .asz-6i .a6 .luna th { font-size: 3.6pt; } .asz-6i .a6 .luna td { font-size: 4.8pt; height: 2.2mm; padding: 0; line-height: 1.15; }
+.a6 .luna td, .a6 .luna th, .a6 .luna-nume { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+/* cartonașele mai mici: celule pe măsură */
+.asz-6 .a6 .foaie.calendar, .asz-8 .a6 .foaie.calendar { padding: 7mm 7mm 5.5mm; }
+.asz-6 .a6 .luni, .asz-8 .a6 .luni { gap: 1mm; }
+.asz-6 .a6 .luna-nume, .asz-8 .a6 .luna-nume { font-size: 7.5pt; margin-bottom: .2mm; }
+.asz-6 .a6 .luna th, .asz-8 .a6 .luna th { font-size: 5pt; }
+.asz-6 .a6 .luna td { font-size: 6.5pt; height: 3.6mm; } .asz-8 .a6 .luna td { font-size: 6pt; height: 3.4mm; }
+.asz-6i .a6 .foaie.calendar { padding: 7mm 6mm 6mm; } .asz-6i .a6 .luna-nume { font-size: 8pt; } .asz-6i .a6 .luna th { font-size: 5.5pt; } .asz-6i .a6 .luna td { font-size: 7pt; height: 4.6mm; }
 @media print {
   body { background: #fff; }
   .fundal, .bara, .caseta-ghid, .rand-actiuni, #pas-1, #pas-2 { display: none !important; }

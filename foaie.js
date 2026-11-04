@@ -126,23 +126,25 @@
     }
   }
 
-  // Foaia-calendar de la începutul teancului: tot anul pe un cartonaș, zilele numerotate, duminicile marcate, de bifat cu pixul.
+  // Foaia-calendar de la începutul teancului (hotărârea ei 4.11.2026): DOAR 3 luni — luna tipăririi și următoarele două,
+  // una sub alta, cu celule mari, ca să se poată bifa cu pixul. Zilele numerotate, duminicile marcate.
   const LUNI_RO = ['Ianuarie', 'Februarie', 'Martie', 'Aprilie', 'Mai', 'Iunie', 'Iulie', 'August', 'Septembrie', 'Octombrie', 'Noiembrie', 'Decembrie'];
-  function calendarHtml(an, aspect) {
+  function calendarHtml(azi, aspect) {
+    azi = azi || new Date();
     const fam = FONTURI.find(x => x.nume === aspect.font) || FONTURI[0];
-    const luni = LUNI_RO.map((nume, m) => {
-      const prima = (new Date(an, m, 1).getDay() + 6) % 7;   // 0 = luni
+    const luni = [0, 1, 2].map(k => {
+      const d = new Date(azi.getFullYear(), azi.getMonth() + k, 1), an = d.getFullYear(), m = d.getMonth();
+      const prima = (d.getDay() + 6) % 7;   // 0 = luni
       const zile = new Date(an, m + 1, 0).getDate();
       const celule = [];
       for (let i = 0; i < prima; i++) celule.push('<td></td>');
       for (let z = 1; z <= zile; z++) { const dum = (prima + z - 1) % 7 === 6; celule.push(`<td${dum ? ' class="dum"' : ''}>${z}</td>`); }
       while (celule.length % 7) celule.push('<td></td>');
       const randuri = []; for (let i = 0; i < celule.length; i += 7) randuri.push('<tr>' + celule.slice(i, i + 7).join('') + '</tr>');
-      return `<div class="luna"><div class="luna-nume">${nume}</div><table><tr class="zs"><th>L</th><th>M</th><th>M</th><th>J</th><th>V</th><th>S</th><th class="dum">D</th></tr>${randuri.join('')}</table></div>`;
+      return `<div class="luna"><div class="luna-nume">${LUNI_RO[m]} ${an}</div><table><tr class="zs"><th>L</th><th>M</th><th>M</th><th>J</th><th>V</th><th>S</th><th class="dum">D</th></tr>${randuri.join('')}</table></div>`;
     });
     return `${chenar(aspect)}
       <div class="foaie calendar" style="font-family:'${fam.nume}', ${fam.fel}">
-        <div class="titlu">${an}</div>
         <div class="luni">${luni.join('')}</div>
       </div>`;
   }

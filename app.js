@@ -6,6 +6,8 @@ const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs
 const PDFJS_WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
 
 let lot = { pagini: [] };
+let ziProba = null;   // doar la probă locală: ziua „de azi" pentru calendar
+const VIATA_MS = 24 * 3600 * 1000;   // paginile încărcate dispar singure după 24 h (hotărârea ei 4.11.2026)
 const setari = incarcaSetari();
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const idNou = () => 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -46,10 +48,9 @@ for (const [id, cheie] of [['#asp-font', 'font'], ['#asp-chenar', 'chenar'], ['#
 }
 // foaia-calendar
 (function calendar() {
-  const cb = $('#cal-activ'), an = $('#cal-an');
-  cb.checked = !!setari.aspect.calendar; an.value = setari.aspect.an || new Date().getFullYear();
+  const cb = $('#cal-activ');
+  cb.checked = !!setari.aspect.calendar;
   cb.onchange = () => { setari.aspect.calendar = cb.checked; salveazaSetari(); deseneazaFoi(); };
-  an.onchange = () => { setari.aspect.an = Math.min(2100, Math.max(2000, +an.value || new Date().getFullYear())); an.value = setari.aspect.an; salveazaSetari(); deseneazaFoi(); };
 })();
 // mărimea literei: scrisă de ea (pt) sau automată
 (function marime() {
@@ -64,7 +65,7 @@ for (const [id, cheie] of [['#asp-font', 'font'], ['#asp-chenar', 'chenar'], ['#
 function deseneazaCota() {
   const el = $('#cota'); if (setari.furnizor !== 'gemini') { el.textContent = 'Claude: fără cotă gratuită, se plătește pe pagină.'; el.className = 'cota'; return; }
   const c = OCR.cota(setari);
-  const necitite = lot.pagini.filter(p => p.stare !== 'citit' && p.img).length;
+  const necitite = lot.pagini.filter(p => p.stare !== 'citit' && (p.img || p.areImg)).length;
   let cls = 'cota', text;
   if (c.toateEpuizate) { cls += ' gata'; text = `Gemini nu mai primește pagini azi. Se reface la ${c.reset}.`; }
   else if (c.peZi == null) text = `<b>${esc(c.nume)}</b> · azi ${c.folosite} pagini citite · cotă necunoscută`;
@@ -107,8 +108,25 @@ async function adaugaFisiere(fisiere) {
   salveazaLot(); deseneazaMiniaturi(); actualizeazaButoane(erori.length === 0);
 }
 async function adaugaPagina(img, sursa) {
-  const p = { id: idNou(), img, sursa, stare: 'necitit', data: null, dataText: null, dataAlta: null, sectiuni: [], observatii: '' };
-  lot.pagini.push(p); await pozaPune(p.id, img); return p;
+  const p = { id: idNou(), img, mini: await miniatura(img), sursa, stare: 'necitit', creat: Date.now(), data: null, dataText: null, dataAlta: null, sectiuni: [], observatii: '' };
+  lot.pagini.push(p); await pozaPune(p.id, img); await pozaPune(p.id + '-mini', p.mini); return p;
+}
+// miniatură mică pentru grila din pasul 1 (lista rămâne ușoară și la 100 de pagini)
+function miniatura(img) {
+  return new Promise(res => {
+    const i = new Image(); i.onload = () => { const sc = 320 / i.height; const c = document.createElement('canvas'); c.width = Math.round(i.width * sc); c.height = 320; c.getContext('2d').drawImage(i, 0, 0, c.width, c.height); res(c.toDataURL('image/jpeg', 0.7)); };
+    i.onerror = () => res(null); i.src = img;
+  });
+}
+// poza mare a paginii: din memorie dacă e, altfel din IndexedDB (o singură dată)
+async function pozaPaginii(p) { if (!p.img && p.areImg) p.img = await pozaIa(p.id); return p.img; }
+// paginile mai vechi de 24 h se șterg singure (și pozele lor)
+function curataVechi() {
+  const acum = Date.now(), vechi = lot.pagini.filter(p => p.creat && acum - p.creat > VIATA_MS);
+  if (!vechi.length) return false;
+  for (const p of vechi) { pozaSterge(p.id); pozaSterge(p.id + '-mini'); }
+  lot.pagini = lot.pagini.filter(p => !vechi.includes(p));
+  salveazaLot(); return vechi.length;
 }
 
 async function adaugaPdf(f) {
@@ -144,18 +162,20 @@ function deseneazaMiniaturi() {
   lot.pagini.forEach((p, i) => {
     const d = document.createElement('div'); d.className = 'miniatura';
     const stare = { necitit: '— necitit', citire: '⏳ se citește', citit: '✓ citit', eroare: '✗ eroare' }[p.stare];
-    d.innerHTML = `${p.img ? `<img alt="pagina ${i + 1}">` : '<div class="fara-poza">poza lipsește</div>'}<div>${i + 1}. <span class="stare-${p.stare}">${stare}</span></div>
+    const ore = p.creat ? Math.max(0, Math.round((VIATA_MS - (Date.now() - p.creat)) / 3600000)) : null;
+    d.innerHTML = `${p.mini || p.img ? `<img alt="pagina ${i + 1}" loading="lazy" decoding="async">` : '<div class="fara-poza">poza lipsește</div>'}<div>${i + 1}. <span class="stare-${p.stare}">${stare}</span></div>
+      ${ore != null ? `<div class="mic">dispare în ${ore} h</div>` : ''}
       <button class="secundar" title="șterge pagina">✕</button>${p.stare === 'citit' ? ' <button class="secundar" title="citește din nou">↻</button>' : ''}`;
-    if (p.img) { d.querySelector('img').src = p.img; d.querySelector('img').onclick = () => lupa(p.img); }
+    const im = d.querySelector('img'); if (im) { im.src = p.mini || p.img; im.onclick = async () => lupa(await pozaPaginii(p) || p.mini); }
     const [bs, br] = d.querySelectorAll('button');
-    bs.onclick = () => { lot.pagini.splice(i, 1); pozaSterge(p.id); salveazaLot(); deseneazaMiniaturi(); actualizeazaButoane(); };
+    bs.onclick = () => { lot.pagini.splice(i, 1); pozaSterge(p.id); pozaSterge(p.id + '-mini'); salveazaLot(); deseneazaMiniaturi(); actualizeazaButoane(); };
     if (br) br.onclick = () => { p.stare = 'necitit'; salveazaLot(); deseneazaMiniaturi(); actualizeazaButoane(); };
     m.appendChild(d);
   });
 }
 function lupa(src) { $('#lupa-img').src = src; $('#lupa').showModal(); }
 function actualizeazaButoane(stergeMesaj = true) {
-  const necitite = lot.pagini.filter(p => p.stare !== 'citit' && p.img).length;
+  const necitite = lot.pagini.filter(p => p.stare !== 'citit' && (p.img || p.areImg)).length;
   $('#btn-citeste').disabled = !necitite || !setari.cheie;
   $('#btn-citeste').textContent = necitite && necitite < lot.pagini.length ? `🔍 Citește paginile rămase (${necitite})` : '🔍 Citește toate paginile';
   if (lot.pagini.length && !setari.cheie) $('#progres').textContent = 'Pune cheia API în ⚙ ca să poți citi.';
@@ -166,7 +186,7 @@ $('#btn-goleste').onclick = () => { if (confirm('Ștergi tot lotul încărcat?')
 
 // ---------- citirea ----------
 $('#btn-citeste').onclick = async () => {
-  const deCitit = lot.pagini.map((p, i) => [p, i]).filter(([p]) => p.stare !== 'citit' && p.img);
+  const deCitit = lot.pagini.map((p, i) => [p, i]).filter(([p]) => p.stare !== 'citit' && (p.img || p.areImg));
   if (setari.furnizor === 'gemini') {
     const c = OCR.cota(setari);
     if (c.toateEpuizate) { alert(`Gemini nu mai primește pagini azi. Cota se reface la ${c.reset}.`); return; }
@@ -178,7 +198,8 @@ $('#btn-citeste').onclick = async () => {
     p.stare = 'citire'; deseneazaMiniaturi();
     $('#progres').textContent = `Se citește pagina ${i + 1} (${++n}/${deCitit.length})…`;
     try {
-      const r = await OCR.citestePagina(p.img, setari);
+      const img = await pozaPaginii(p); if (!img) throw new Error('poza paginii nu mai e în browser');
+      const r = await OCR.citestePagina(img, setari);
       aplicaCitirea(p, r); p.stare = 'citit'; p.eroare = '';
     } catch (e) {
       p.stare = e.cotaZi ? 'necitit' : 'eroare'; p.eroare = e.cotaZi ? '' : e.message; console.error(e);
@@ -187,7 +208,7 @@ $('#btn-citeste').onclick = async () => {
     salveazaLot(); deseneazaMiniaturi(); deseneazaCota();
   }
   const erori = lot.pagini.filter(p => p.stare === 'eroare').length;
-  const ramase = lot.pagini.filter(p => p.stare === 'necitit' && p.img).length;
+  const ramase = lot.pagini.filter(p => p.stare === 'necitit' && (p.img || p.areImg)).length;
   $('#progres').textContent = oprit ? `Gemini și-a terminat cota pe azi; ${ramase} pagini rămân pentru mâine după 10:00 (ora României).`
     : erori ? `Gata, dar ${erori} pagini cu eroare (apasă din nou ca să reîncerci).` : 'Gata. Treci la pasul 2 · Verifică.';
   actualizeazaButoane(false);
@@ -227,7 +248,12 @@ function deseneazaVerificare() {
     plus.onclick = () => { p.sectiuni.push({ categorie: 'adormiti', nume: [], casa: false }); salveazaLot(); deseneazaVerificare(); };
     dreapta.appendChild(plus);
     if (p.observatii) { const o = document.createElement('div'); o.className = 'obs'; o.textContent = 'Altceva pe foaie (nu se tipărește): ' + p.observatii; dreapta.appendChild(o); }
-    if (p.img) { const img = document.createElement('img'); img.src = p.img; img.alt = `pagina ${i + 1}`; img.onclick = () => lupa(p.img); d.appendChild(img); }
+    if (p.mini || p.img || p.areImg) {   // întâi miniatura (instant), apoi poza mare când ajunge din IndexedDB
+      const img = document.createElement('img'); img.src = p.mini || p.img; img.alt = `pagina ${i + 1}`; img.loading = 'lazy'; img.decoding = 'async';
+      img.onclick = async () => lupa(await pozaPaginii(p) || p.mini);
+      pozaPaginii(p).then(src => { if (src) img.src = src; });
+      d.appendChild(img);
+    }
     else { const g = document.createElement('div'); g.className = 'fara-poza'; g.textContent = 'Poza nu mai e în browser; textul citit a rămas.'; d.appendChild(g); }
     d.appendChild(dreapta); v.appendChild(d);
   });
@@ -293,7 +319,7 @@ function deseneazaFoi() {
   });
   if (setari.aspect.calendar) {   // coala-calendar, prima din teanc
     const a4 = coala('coala-calendar');
-    for (let k = 0; k < az.coloane * az.randuri; k++) { const d = document.createElement('div'); d.className = 'a6'; d.style.width = az.W + 'mm'; d.style.height = az.H + 'mm'; d.innerHTML = FOAIE.calendarHtml(+setari.aspect.an || new Date().getFullYear(), setari.aspect); a4.appendChild(d); }
+    for (let k = 0; k < az.coloane * az.randuri; k++) { const d = document.createElement('div'); d.className = 'a6'; d.style.width = az.W + 'mm'; d.style.height = az.H + 'mm'; d.innerHTML = FOAIE.calendarHtml(ziProba || new Date(), setari.aspect); a4.appendChild(d); }
     cont.prepend(a4.inv);
   }
   const potriveste = () => { for (const a6 of cont.querySelectorAll('.a6')) FOAIE.potriveste(a6, setari.aspect); };
@@ -316,14 +342,18 @@ $('#linii-taiere').onchange = deseneazaFoi;
 
 // ---------- persistență: textul în localStorage (fără poze), pozele în IndexedDB ----------
 function salveazaLot() {
-  try { localStorage.setItem(CHEIE_LOT, JSON.stringify({ pagini: lot.pagini.map(p => ({ ...p, img: undefined, ocr: undefined })) })); }
+  try { localStorage.setItem(CHEIE_LOT, JSON.stringify({ pagini: lot.pagini.map(p => ({ ...p, img: undefined, mini: undefined, ocr: undefined, areImg: !!(p.img || p.areImg) })) })); }
   catch (e) { $('#progres').textContent = 'Nu pot salva lotul în browser (spațiu plin?). Nu închide pagina până nu tipărești.'; console.warn(e); }
 }
 async function incarcaLot() {
   try {
     const l = JSON.parse(localStorage.getItem(CHEIE_LOT) || 'null'); if (!l || !l.pagini) return;
-    for (const p of l.pagini) { p.id = p.id || idNou(); p.img = await pozaIa(p.id); if (p.stare === 'citire') p.stare = 'necitit'; }
-    lot = l;
+    const acum = Date.now();
+    const inainte = l.pagini.length;
+    l.pagini = l.pagini.filter(p => !(p.creat && acum - p.creat > VIATA_MS) || (pozaSterge(p.id), pozaSterge(p.id + '-mini'), false));   // 24 h
+    const sterse = inainte - l.pagini.length;
+    await Promise.all(l.pagini.map(async p => { p.id = p.id || idNou(); p.mini = await pozaIa(p.id + '-mini'); if (!p.mini) p.img = await pozaIa(p.id); p.areImg = !!(p.img || p.areImg || p.mini); if (p.stare === 'citire') p.stare = 'necitit'; }));
+    lot = l; if (sterse) salveazaLot();
   } catch (e) { console.warn(e); }
 }
 
@@ -338,14 +368,15 @@ async function incarcaProba() {
   }
   if (!proba || !local || !/^probe\/[\w.-]+\.json$/.test(proba)) return false;
   if (u.get('peCoala')) setari.aspect.peCoala = u.get('peCoala');   // doar la probă locală
-  if (u.get('calendar')) { setari.aspect.calendar = true; setari.aspect.an = +u.get('calendar'); }
+  if (u.get('calendar')) { setari.aspect.calendar = true; ziProba = new Date(u.get('calendar')); }
   const pag = await (await fetch(proba)).json();
-  lot = { pagini: pag.map(x => { const p = { id: idNou(), img: x.img, sursa: x.sursa, stare: 'citit', data: null, sectiuni: [], observatii: '' }; aplicaCitirea(p, x.raspuns); return p; }) };
+  lot = { pagini: pag.map(x => { const p = { id: idNou(), img: x.img, sursa: x.sursa, stare: 'citit', creat: Date.now(), data: null, sectiuni: [], observatii: '' }; aplicaCitirea(p, x.raspuns); return p; }) };
   aratăPas(+(u.get('pas') || 2)); return true;
 }
 
 (async () => {
   if (!(await incarcaProba())) await incarcaLot();
   deseneazaMiniaturi(); actualizeazaButoane();
+  setInterval(() => { if (curataVechi()) { deseneazaMiniaturi(); actualizeazaButoane(); } }, 60000);
   if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
 })();
