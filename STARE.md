@@ -23,6 +23,7 @@
 1. Ea tipărește primul teanc real și spune cum arată pe hârtie (chenar, mărime, tăiere).
 
 ## Reguli adăugate după 0.4
+- 4.11, după-amiaza: **banda imprimantei** — HP LaserJet 400 M401dne nu tipărește 4,23 mm pe fiecare latură (întrebată direct prin IPP; driverul Windows „IPP Class” minte 0 mm). Rama era la 3,3–3,9 mm de marginea colii → ieșea tăiată. Acum rama și textul fiecărui cartonaș sunt retrase 2,5 mm (`SIGUR`/`--sigur`): cel mai apropiat desen la 5,7 mm de margine, pe 4/6/8/6i. Bara de derulare nu mai intră în tipar. Probă: `node test/tipar.mjs` + `python test/zona-moarta.py`. **Neprobat încă pe hârtie** (ea tipărește o coală).
 - Foile fără dată primesc, la tipărire, data de azi + 7 zile (4.11.2026).
 
 - 4 / 6 / 8 pomelnice pe coală, la alegere, în pasul 3 (4.11.2026). SPECIFICATIE.md = promptul complet pentru Gemini/Antigravity (copie pe Desktop).

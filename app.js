@@ -306,6 +306,7 @@ function deseneazaFoi() {
   const automate = foi.filter(f => f.dataAutomata).length;
   $('#rezumat-foi').textContent = `${foi.length} pomelnice pe ${a4uri.length} coli A4 (câte ${az.coloane * az.randuri}, A4 ${peisaj ? 'peisaj' : 'portret'})` + (automate ? ` · ${automate} foi fără dată au primit ${REGULI.dataTiparirii()} (azi + 7 zile)` : '');
   const cont = $('#foi'); cont.innerHTML = '';
+  cont.style.setProperty('--sigur', FOAIE.SIGUR + 'mm');   // același număr cu care se desenează rama (foaie.js)
   const taiere = $('#linii-taiere').checked;
   FOAIE.incarcaFont(setari.aspect.font);
   a4uri.forEach(grup => {

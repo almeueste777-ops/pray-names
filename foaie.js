@@ -82,9 +82,16 @@
       <rect x="${m + 1.4}" y="${m + 1.4}" width="${W - 2 * m - 2.8}" height="${H - 2 * m - 2.8}" fill="none" stroke="${p.b}" stroke-width=".3"/>
     </svg>`;
   }
+  // Banda de siguranță a imprimantei (4.11.2026): HP LaserJet 400 M401dne NU tipărește 4,23 mm pe fiecare latură
+  // (IPP media-*-margin-supported = 423), iar driverul Windows „IPP Class" raportează fals 0 mm. Rama lipită la 4 mm de
+  // marginea colii ieșea tăiată sau imprimanta micșora toată pagina. Rama și textul stau acum pe un cartonaș interior,
+  // retras SIGUR mm pe toate laturile (la fel pe toate cartonașele, ca după tăiere să arate identic) → rama la 6,5 mm.
+  // Același număr e în style.css (--sigur). Liniile de tăiere rămân exact pe mijlocul colii.
+  const SIGUR = 2.5;
   function chenar(aspect) {
     const p = PALETE[aspect.culoare] || PALETE['verde-auriu'], a = asezare(aspect);
-    return aspect.chenar === 'fara' ? '' : aspect.chenar === 'simplu' ? chenarSimplu(p, a.W, a.H) : chenarClasic(p, a.W, a.H);
+    const W = a.W - 2 * SIGUR, H = a.H - 2 * SIGUR;
+    return aspect.chenar === 'fara' ? '' : aspect.chenar === 'simplu' ? chenarSimplu(p, W, H) : chenarClasic(p, W, H);
   }
 
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -149,5 +156,5 @@
       </div>`;
   }
 
-  root.FOAIE = { FONTURI, CHENARE, PALETE, IMPLICIT, ASEZARI, asezare, calendarHtml, incarcaFont, html, potriveste, coloane };
+  root.FOAIE = { FONTURI, CHENARE, PALETE, IMPLICIT, ASEZARI, SIGUR, asezare, calendarHtml, incarcaFont, html, potriveste, coloane };
 })(window);

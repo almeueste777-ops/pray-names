@@ -89,13 +89,15 @@ Dacă un pomelnic are mai multe nume decât maximul, se continuă pe foi marcate
 
 **Linii de tăiere** între celule: punctate, 0,4 mm, gri (#9a9a9a), opționale.
 
-**Chenarul = o ramă pe marginea celulei, interiorul rămâne curat.** SVG în milimetri, viewBox = dimensiunea celulei:
-- două linii paralele la **4 mm** și **6,2 mm** de margine: exterioară verde‑oliv `#6f8a4f`, grosime 0,5 mm; interioară aurie `#c9a227`, 0,32 mm;
+**Banda imprimantei (4.11.2026, obligatoriu):** imprimanta ei (HP LaserJet 400 M401dne) NU tipărește **4,23 mm** pe fiecare latură a colii (spus de imprimantă prin IPP: `media-*-margin-supported = 423`); driverul Windows „IPP Class" raportează fals 0 mm. De aceea rama și tot conținutul fiecărui cartonaș se desenează pe un **cartonaș interior retras 2,5 mm pe toate laturile** (`SIGUR` în foaie.js = `--sigur` în style.css), la fel pe toate cartonașele, ca după tăiere să arate identic. Nimic auriu/text nu ajunge mai aproape de 5,5 mm de marginea colii; doar liniile gri de tăiere merg până la margine. Bara de derulare a paginii nu are voie să intre în tipar (`html, body { overflow: visible }` la print). Probă: `node test/tipar.mjs` → PDF, `python test/zona-moarta.py` pune banda moartă cu roșu.
+
+**Chenarul = o ramă pe marginea cartonașului interior, interiorul rămâne curat.** SVG în milimetri, viewBox = dimensiunea celulei minus 2 × 2,5 mm:
+- două linii paralele la **4 mm** și **6,2 mm** de marginea cartonașului interior (adică 6,5 mm și 8,7 mm de linia de tăiere): exterioară verde‑oliv `#6f8a4f`, grosime 0,5 mm; interioară aurie `#c9a227`, 0,32 mm;
 - colțuri rotunjite cu rază 9 mm, în fiecare colț o volută mică (spirală dublă verde + aurie), o frunză și un romb albastru `#1f4e9a`, totul în ≤ 9 mm de margine;
 - la mijlocul fiecărei laturi un fleuron lat (romb albastru 7,2 × 2 mm, cu linii aurii și puncte), așezat PE linie, fără să intre în foaie;
 - variante: „simplu" (doar cele două linii), „fără"; palete: verde‑auriu (implicit), auriu, albastru, negru.
 
-**Conținutul celulei** (padding 9 mm sus, 10 mm lateral, 8 mm jos):
+**Conținutul celulei** (măsurile de mai jos sunt de la marginea cartonașului interior, retras 2,5 mm; padding 9 mm sus, 10 mm lateral, 8 mm jos):
 - **Data** într‑o **casetă mică gri foarte deschis** (fundal `#f1f1f1`, contur `#d6d6d6` 0,25 mm, colțuri 1,3 mm, padding 1,4 × 2,4 mm), poziționată **sus‑dreapta** (8,5 mm de sus, 9 mm de dreapta), font fără serife cu **cifre de aceeași lățime** (Atkinson Hyperlegible / Inter / system‑ui), 10,5 pt, bold, format `zz.ll.aaaa`.
 - **Titlul** („VII" sau „✝ ADORMIȚI") **centrat, ca titlu**: 19 pt, semibold, majuscule, spațiere .16em, cu 6,5 mm spațiu deasupra ca să nu atingă caseta datei (la 6/8 pe coală: 14 pt).
 - **Numele:** blocul de nume e **centrat pe foaie**, dar în interiorul blocului **fiecare coloană e aliniată la stânga** (ochiul se întoarce mereu în același loc). Litere mari‑mici (NU majuscule: forma cuvântului se recunoaște dintr‑o privire). Interlinie 1,45 (1,35 pe două coloane). Două coloane umplute de sus în jos, prima ia surplusul, cu o linie verticală subțire între ele (0,3 mm, negru 18%). Mărimea literei: **automată** (cea mai mare dintre 22, 20, 18, 16, 14, 13, 12, 11, 10 pt la care totul încape, măsurând blocul de nume, nu numărând numele) **sau scrisă de mine** în puncte (8–48). Font la alegere, memorat: EB Garamond (implicit), Cormorant Garamond, Lora, Source Serif 4, Noto Serif, Playfair Display, Atkinson Hyperlegible, Inter, Times New Roman, Georgia.

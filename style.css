@@ -105,8 +105,11 @@ dialog input, dialog select { width: 100%; margin-top: 6px; }
 /* linii de tăiere: între coloane (nu după ultima) și între rânduri (nu după ultimul) */
 .taiere.asz-4 .a6:nth-child(odd), .taiere.asz-6 .a6:not(:nth-child(3n)), .taiere.asz-6i .a6:not(:nth-child(3n)), .taiere.asz-8 .a6:not(:nth-child(4n)) { border-right: .4mm dashed #9a9a9a; }
 .taiere.asz-4 .a6:nth-child(-n+2), .taiere.asz-6 .a6:nth-child(-n+3), .taiere.asz-6i .a6:nth-child(-n+3), .taiere.asz-8 .a6:nth-child(-n+4) { border-bottom: .4mm dashed #9a9a9a; }
-.a6 .chenar { position: absolute; inset: 0; width: 100%; height: 100%; }
-.a6 .foaie { position: absolute; inset: 0; padding: 9mm 10mm 8mm; display: flex; flex-direction: column; overflow: hidden; }
+/* --sigur = cât se retrage cartonașul interior, ca nimic să nu cadă în banda netipăribilă (HP M401dne: 4,23 mm).
+   Valoarea adevărată vine din FOAIE.SIGUR (app.js o pune pe #foi); 2.5mm e doar rezerva. */
+#foi { --sigur: 2.5mm; }
+.a6 .chenar { position: absolute; top: var(--sigur); left: var(--sigur); width: calc(100% - 2 * var(--sigur)); height: calc(100% - 2 * var(--sigur)); }
+.a6 .foaie { position: absolute; inset: var(--sigur); padding: 9mm 10mm 8mm; display: flex; flex-direction: column; overflow: hidden; }
 /* titlul e TITLU: centrat, mare; data stă într-o casetă gri deschis, sus-dreapta, cu cifre de tabel (toate la fel de late) */
 .a6 .titlu { text-align: center; font-size: 19pt; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; margin: 6.5mm 0 3mm; }
 .asz-6 .a6 .titlu, .asz-8 .a6 .titlu, .asz-6i .a6 .titlu { font-size: 14pt; margin: 5.5mm 0 2mm; }
@@ -144,7 +147,8 @@ dialog input, dialog select { width: 100%; margin-top: 6px; }
 .asz-6 .a6 .luna td { font-size: 6.5pt; height: 3.6mm; } .asz-8 .a6 .luna td { font-size: 6pt; height: 3.4mm; }
 .asz-6i .a6 .foaie.calendar { padding: 7mm 6mm 6mm; } .asz-6i .a6 .luna-nume { font-size: 8pt; } .asz-6i .a6 .luna th { font-size: 5.5pt; } .asz-6i .a6 .luna td { font-size: 7pt; height: 4.6mm; }
 @media print {
-  body { background: #fff; }
+  /* overflow-x: hidden pe html/body făcea bara de derulare să intre în PDF/tipar, pe marginea dreaptă */
+  html, body { background: #fff; overflow: visible !important; }
   .fundal, .bara, .caseta-ghid, .rand-actiuni, #pas-1, #pas-2 { display: none !important; }
   main { max-width: none; padding: 0; margin: 0; }
   #pas-3 { display: block !important; }
