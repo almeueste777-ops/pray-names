@@ -28,3 +28,5 @@
 - 4 / 6 / 8 pomelnice pe coală, la alegere, în pasul 3 (4.11.2026). SPECIFICATIE.md = promptul complet pentru Gemini/Antigravity (copie pe Desktop).
 
 - 4.11, seara: cartonașele sunt mereu portret (6 și 8 pe A4 peisaj: 99×105 și 74×105 = A7; 6 înguste 70×148 pe portret); foaie-calendar opțională la începutul teancului (tot anul, duminici roșii); numele nu se mai rup pe două rânduri.
+
+- Interfață adaptabilă la orice ecran (telefon 320+, peisaj, tabletă, monitor), probată prin CDP la 5 mărimi (4.11.2026).
