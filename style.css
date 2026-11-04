@@ -96,27 +96,52 @@ dialog input, dialog select { width: 100%; margin-top: 6px; }
 .a4 { width: 210mm; height: 296.5mm; background: #fff; color: #000; display: grid; grid-template-columns: 105mm 105mm; grid-template-rows: 148.25mm 148.25mm; margin: 0 auto 12mm; box-shadow: 0 20px 50px rgba(15,26,46,.25); page-break-after: always; break-after: page; border-radius: 2px; }
 .a4:last-child { page-break-after: auto; break-after: auto; }
 .a6 { position: relative; width: 105mm; height: 148.25mm; overflow: hidden; }
-.taiere .a6:nth-child(odd) { border-right: .4mm dashed #9a9a9a; }
-.taiere.pe4 .a6:nth-child(-n+2), .taiere.pe6 .a6:nth-child(-n+4), .taiere.pe8 .a6:nth-child(-n+6) { border-bottom: .4mm dashed #9a9a9a; }
+/* linii de tăiere: între coloane (nu după ultima) și între rânduri (nu după ultimul) */
+.taiere.asz-4 .a6:nth-child(odd), .taiere.asz-6 .a6:not(:nth-child(3n)), .taiere.asz-6i .a6:not(:nth-child(3n)), .taiere.asz-8 .a6:not(:nth-child(4n)) { border-right: .4mm dashed #9a9a9a; }
+.taiere.asz-4 .a6:nth-child(-n+2), .taiere.asz-6 .a6:nth-child(-n+3), .taiere.asz-6i .a6:nth-child(-n+3), .taiere.asz-8 .a6:nth-child(-n+4) { border-bottom: .4mm dashed #9a9a9a; }
 .a6 .chenar { position: absolute; inset: 0; width: 100%; height: 100%; }
 .a6 .foaie { position: absolute; inset: 0; padding: 9mm 10mm 8mm; display: flex; flex-direction: column; overflow: hidden; }
 /* titlul e TITLU: centrat, mare; data stă într-o casetă gri deschis, sus-dreapta, cu cifre de tabel (toate la fel de late) */
 .a6 .titlu { text-align: center; font-size: 19pt; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; margin: 6.5mm 0 3mm; }
-.pe6 .a6 .titlu, .pe8 .a6 .titlu { font-size: 14pt; margin: 5.5mm 0 2mm; }
-.pe8 .a6 .data { font-size: 9pt; top: 7mm; }
-.pe6 .a6 .jos, .pe8 .a6 .jos { font-size: 10pt; margin-top: 1.5mm; }
+.asz-6 .a6 .titlu, .asz-8 .a6 .titlu, .asz-6i .a6 .titlu { font-size: 14pt; margin: 5.5mm 0 2mm; }
+.asz-8 .a6 .data, .asz-6i .a6 .data { font-size: 9pt; top: 7mm; right: 7mm; }
+.asz-8 .a6 .foaie, .asz-6i .a6 .foaie { padding: 8mm 7mm 7mm; }
+.asz-6 .a6 .jos, .asz-8 .a6 .jos, .asz-6i .a6 .jos { font-size: 10pt; margin-top: 1.5mm; }
 .a6 .data { position: absolute; top: 8.5mm; right: 9mm; font: 600 10.5pt/1 "Atkinson Hyperlegible", "Inter", -apple-system, "Segoe UI", system-ui, sans-serif; font-variant-numeric: tabular-nums; letter-spacing: .06em; color: #222; background: #f1f1f1; border: .25mm solid #d6d6d6; border-radius: 1.3mm; padding: 1.4mm 2.4mm; white-space: nowrap; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .a6 .cont { font-size: 9pt; opacity: .7; text-align: center; margin-top: -2mm; margin-bottom: 1mm; }
 .a6 .jos { text-align: center; font-size: 12pt; font-weight: 600; letter-spacing: .04em; margin-top: 2.5mm; }
 /* numele: bloc centrat pe foaie, dar fiecare coloană aliniată la stânga (ochiul se întoarce mereu în același loc) */
 .a6 .nume { flex: 1; display: flex; justify-content: center; align-items: flex-start; gap: 7mm; min-height: 0; }
 .a6 .nume ul { margin: 0; padding: 0; list-style: none; text-align: left; }
-.a6 .nume.col2 ul { flex: 0 1 auto; max-width: 48%; }
+.a6 .nume.col2 ul { flex: 0 0 auto; }
 .a6 .nume.col2 ul + ul { border-left: .3mm solid rgba(0,0,0,.18); padding-left: 6mm; }
-.a6 .nume li { line-height: 1.45; font-weight: 500; letter-spacing: .005em; overflow-wrap: anywhere; }
+.a6 .nume li { line-height: 1.45; font-weight: 500; letter-spacing: .005em; white-space: nowrap; }   /* un nume nu se rupe niciodată pe două rânduri: litera scade până încape */
 .a6 .nume.m22 { font-size: 22pt; } .a6 .nume.m20 { font-size: 20pt; } .a6 .nume.m18 { font-size: 18pt; } .a6 .nume.m16 { font-size: 16pt; }
 .a6 .nume.m14 { font-size: 14pt; } .a6 .nume.m13 { font-size: 13pt; } .a6 .nume.m12 { font-size: 12pt; } .a6 .nume.m11 { font-size: 11pt; } .a6 .nume.m10 { font-size: 10pt; }
 .a6 .nume.col2 { line-height: 1.35; }
+/* foaia-calendar: 12 luni pe cartonaș; cifre mici dar clare, duminica evidențiată */
+.a6 .foaie.calendar { padding: 8mm 8mm 6mm; }
+.a6 .foaie.calendar .titlu { margin: 0 0 1.5mm; font-size: 14pt; letter-spacing: .2em; }
+.a6 .luni { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2mm 2mm; align-content: stretch; min-height: 0; }
+.a6 .luna-nume { text-align: center; font-weight: 600; font-size: 6.5pt; letter-spacing: .04em; margin-bottom: .3mm; }
+.a6 .luna table { width: 100%; border-collapse: collapse; table-layout: fixed; font-family: "Atkinson Hyperlegible", "Inter", -apple-system, "Segoe UI", system-ui, sans-serif; }
+.a6 .luna th { font-size: 4.6pt; font-weight: 600; color: #777; padding: 0; line-height: 1.2; }
+.a6 .luna td { font-size: 5.6pt; text-align: center; padding: .25mm 0; line-height: 1.25; border: .12mm solid #ddd; height: 2.9mm; font-variant-numeric: tabular-nums; }
+.a6 .luna td:empty { border-color: transparent; }
+.a6 .luna td.dum, .a6 .luna th.dum { color: #b3402f; font-weight: 700; }
+.a6 .luna td, .a6 .luna th, .a6 .luna-nume, .a6 .foaie.calendar .titlu { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+/* 6 pe coală (99 × 105): 4 coloane de luni × 3 rânduri */
+.asz-6 .a6 .foaie.calendar { padding: 7mm 7mm 5mm; } .asz-6 .a6 .foaie.calendar .titlu { font-size: 11pt; margin-bottom: .8mm; }
+.asz-6 .a6 .luni { grid-template-columns: repeat(4, 1fr); gap: .8mm 1.6mm; }
+.asz-6 .a6 .luna-nume { font-size: 5.4pt; margin-bottom: .2mm; } .asz-6 .a6 .luna th { font-size: 4pt; } .asz-6 .a6 .luna td { font-size: 5.1pt; height: 2.5mm; padding: 0; line-height: 1.2; }
+/* 8 pe coală (74 × 105, A7): 3 × 4 */
+.asz-8 .a6 .foaie.calendar { padding: 6.5mm 6mm 4.5mm; } .asz-8 .a6 .foaie.calendar .titlu { font-size: 10pt; margin-bottom: .6mm; }
+.asz-8 .a6 .luni { grid-template-columns: repeat(3, 1fr); gap: .6mm 1.2mm; }
+.asz-8 .a6 .luna-nume { font-size: 4.4pt; margin-bottom: .1mm; } .asz-8 .a6 .luna th { font-size: 3.4pt; } .asz-8 .a6 .luna td { font-size: 4.4pt; height: 2.15mm; padding: 0; line-height: 1.1; border-width: .1mm; }
+/* 6 înguste (70 × 148): 2 × 6 */
+.asz-6i .a6 .foaie.calendar { padding: 7mm 6mm 5mm; } .asz-6i .a6 .foaie.calendar .titlu { font-size: 11pt; margin-bottom: .8mm; }
+.asz-6i .a6 .luni { grid-template-columns: repeat(2, 1fr); gap: .7mm 1.6mm; }
+.asz-6i .a6 .luna-nume { font-size: 5pt; margin-bottom: .1mm; } .asz-6i .a6 .luna th { font-size: 3.6pt; } .asz-6i .a6 .luna td { font-size: 4.8pt; height: 2.2mm; padding: 0; line-height: 1.15; }
 @media print {
   body { background: #fff; }
   .fundal, .bara, .caseta-ghid, .rand-actiuni, #pas-1, #pas-2 { display: none !important; }
@@ -126,6 +151,6 @@ dialog input, dialog select { width: 100%; margin-top: 6px; }
 }
 @media screen and (max-width: 760px) {
   .pagina-verif { grid-template-columns: 1fr; }
-  .a4 { transform: scale(.42); transform-origin: top left; height: 125mm; margin-bottom: 0; width: 210mm; }
+  .a4 { transform: scale(.42); transform-origin: top left; margin-bottom: -60%; }
   .bara { gap: 10px; } .brand .subtitlu { display: none; } .pasi button { padding: 8px 10px; }
 }

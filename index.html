@@ -60,16 +60,17 @@
 
 <!-- PASUL 3 -->
 <section id="pas-3" class="pas ascuns">
-  <div class="caseta-ghid">💡 Mai jos vezi colile A4 exact cum ies la imprimantă: 4, 6 sau 8 pomelnice pe fiecare (alegi din <b>Pe coală</b>), pe o singură față. <b>Fontul, mărimea și chenarul</b> le alegi din bara de mai jos (se țin minte). Apasă <b>Tipărește</b>, alege imprimanta sau „Salvează ca PDF", hârtie A4, margini „Niciuna", scară 100%. Taie apoi pe liniile punctate.</div>
+  <div class="caseta-ghid">💡 Mai jos vezi colile A4 exact cum ies la imprimantă: 4, 6 sau 8 pomelnice pe fiecare (alegi din <b>Pe coală</b>), pe o singură față. <b>Fontul, mărimea și chenarul</b> le alegi din bara de mai jos (se țin minte). Apasă <b>Tipărește</b>, alege imprimanta sau „Salvează ca PDF", hârtie A4, margini „Niciuna", scară 100%. Taie apoi pe liniile punctate. Bifa <b>foaie-calendar</b> pune prima o coală cu tot anul pe fiecare cartonaș, ca să notezi cu pixul când ai pomenit.</div>
   <div class="rand-actiuni card subtire aspect">
     <button id="btn-tipareste" class="mare principal">Tipărește</button>
-    <label>Pe coală <select id="asp-pe-coala"><option value="4">4 (A6, 2×2)</option><option value="6">6 (2×3)</option><option value="8">8 (2×4)</option></select></label>
+    <label>Pe coală <select id="asp-pe-coala"><option value="4">4 (A4 portret, 105×148)</option><option value="6">6 (A4 peisaj, 99×105)</option><option value="8">8 (A4 peisaj, 74×105 = A7)</option><option value="6i">6 înguste (A4 portret, 70×148)</option></select></label>
     <label>Font <select id="asp-font"></select></label>
     <label>Mărime <input type="number" id="asp-marime" min="8" max="48" step="0.5" style="width:5.5em"> pt</label>
     <label><input type="checkbox" id="asp-auto"> automată (cât încape)</label>
     <label>Chenar <select id="asp-chenar"><option value="clasic">clasic (volute)</option><option value="simplu">simplu (linie dublă)</option><option value="fara">fără</option></select></label>
     <label>Culori <select id="asp-culoare"><option value="verde-auriu">verde și auriu</option><option value="auriu">auriu</option><option value="albastru">albastru</option><option value="negru">negru</option></select></label>
     <label><input type="checkbox" id="linii-taiere" checked> linii de tăiere</label>
+    <label><input type="checkbox" id="cal-activ"> foaie-calendar la început, anul <input type="number" id="cal-an" min="2000" max="2100" style="width:5.5em"></label>
     <span id="rezumat-foi" class="mic"></span>
   </div>
   <div id="foi"></div>

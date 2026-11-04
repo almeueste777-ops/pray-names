@@ -44,6 +44,13 @@ for (const [id, cheie] of [['#asp-font', 'font'], ['#asp-chenar', 'chenar'], ['#
   const el = $(id); el.value = setari.aspect[cheie];
   el.onchange = () => { setari.aspect[cheie] = el.value; salveazaSetari(); deseneazaFoi(); };
 }
+// foaia-calendar
+(function calendar() {
+  const cb = $('#cal-activ'), an = $('#cal-an');
+  cb.checked = !!setari.aspect.calendar; an.value = setari.aspect.an || new Date().getFullYear();
+  cb.onchange = () => { setari.aspect.calendar = cb.checked; salveazaSetari(); deseneazaFoi(); };
+  an.onchange = () => { setari.aspect.an = Math.min(2100, Math.max(2000, +an.value || new Date().getFullYear())); an.value = setari.aspect.an; salveazaSetari(); deseneazaFoi(); };
+})();
 // mărimea literei: scrisă de ea (pt) sau automată
 (function marime() {
   const nr = $('#asp-marime'), auto = $('#asp-auto');
@@ -262,16 +269,20 @@ $('#btn-data-toate').onclick = () => {
 // ---------- pasul 3: foile ----------
 function deseneazaFoi() {
   const az = FOAIE.asezare(setari.aspect);
+  const peisaj = az.coala === 'landscape', CW = peisaj ? 297 : 210, CH = (peisaj ? 210 : 297) - 0.5;
+  let st = document.getElementById('orientare'); if (!st) { st = document.createElement('style'); st.id = 'orientare'; document.head.appendChild(st); }
+  st.textContent = `@page { size: A4 ${peisaj ? 'landscape' : 'portrait'}; margin: 0; }`;
+  const coala = (cls) => { const a4 = document.createElement('div'); a4.className = 'a4 asz-' + setari.aspect.peCoala + (taiere ? ' taiere' : '') + (peisaj ? ' peisaj' : '') + (cls ? ' ' + cls : '');
+    a4.style.width = CW + 'mm'; a4.style.height = CH + 'mm'; a4.style.gridTemplateColumns = `repeat(${az.coloane}, ${az.W}mm)`; a4.style.gridTemplateRows = `repeat(${az.randuri}, ${az.H}mm)`; return a4; };
   const foi = REGULI.construiesteFoi(lot.pagini, az.maxNume);
   const a4uri = REGULI.grupeazaA4(foi, az.coloane * az.randuri);
   const automate = foi.filter(f => f.dataAutomata).length;
-  $('#rezumat-foi').textContent = `${foi.length} pomelnice pe ${a4uri.length} coli A4 (câte ${az.coloane * az.randuri})` + (automate ? ` · ${automate} foi fără dată au primit ${REGULI.dataTiparirii()} (azi + 7 zile)` : '');
+  $('#rezumat-foi').textContent = `${foi.length} pomelnice pe ${a4uri.length} coli A4 (câte ${az.coloane * az.randuri}, A4 ${peisaj ? 'peisaj' : 'portret'})` + (automate ? ` · ${automate} foi fără dată au primit ${REGULI.dataTiparirii()} (azi + 7 zile)` : '');
   const cont = $('#foi'); cont.innerHTML = '';
   const taiere = $('#linii-taiere').checked;
   FOAIE.incarcaFont(setari.aspect.font);
   a4uri.forEach(grup => {
-    const a4 = document.createElement('div'); a4.className = 'a4 pe' + (az.coloane * az.randuri) + (taiere ? ' taiere' : '');
-    a4.style.gridTemplateColumns = `repeat(${az.coloane}, ${az.W}mm)`; a4.style.gridTemplateRows = `repeat(${az.randuri}, ${az.H}mm)`;
+    const a4 = coala('');
     for (let k = 0; k < az.coloane * az.randuri; k++) {
       const f = grup[k]; const d = document.createElement('div'); d.className = 'a6'; d.style.width = az.W + 'mm'; d.style.height = az.H + 'mm';
       if (f) d.innerHTML = FOAIE.html(f, setari.aspect);
@@ -279,6 +290,11 @@ function deseneazaFoi() {
     }
     cont.appendChild(a4);
   });
+  if (setari.aspect.calendar) {   // coala-calendar, prima din teanc
+    const a4 = coala('coala-calendar');
+    for (let k = 0; k < az.coloane * az.randuri; k++) { const d = document.createElement('div'); d.className = 'a6'; d.style.width = az.W + 'mm'; d.style.height = az.H + 'mm'; d.innerHTML = FOAIE.calendarHtml(+setari.aspect.an || new Date().getFullYear(), setari.aspect); a4.appendChild(d); }
+    cont.prepend(a4);
+  }
   const potriveste = () => { for (const a6 of cont.querySelectorAll('.a6')) FOAIE.potriveste(a6, setari.aspect); };
   potriveste();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(potriveste);   // după ce vine fontul de pe net, măsurăm din nou
@@ -309,7 +325,8 @@ async function incarcaProba() {
     document.body.dataset.pdfGata = String(lot.pagini.length); return true;
   }
   if (!proba || !local || !/^probe\/[\w.-]+\.json$/.test(proba)) return false;
-  if (u.get('peCoala')) setari.aspect.peCoala = +u.get('peCoala');   // doar la probă locală
+  if (u.get('peCoala')) setari.aspect.peCoala = u.get('peCoala');   // doar la probă locală
+  if (u.get('calendar')) { setari.aspect.calendar = true; setari.aspect.an = +u.get('calendar'); }
   const pag = await (await fetch(proba)).json();
   lot = { pagini: pag.map(x => { const p = { id: idNou(), img: x.img, sursa: x.sursa, stare: 'citit', data: null, sectiuni: [], observatii: '' }; aplicaCitirea(p, x.raspuns); return p; }) };
   aratăPas(+(u.get('pas') || 2)); return true;

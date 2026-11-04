@@ -17,13 +17,18 @@
   ];
   const CHENARE = ['clasic', 'simplu', 'fara'];
   const IMPLICIT = { font: 'EB Garamond', chenar: 'clasic', marime: 'auto', culoare: 'verde-auriu', peCoala: 4 };
-  // Așezarea pe coala A4 (210 × 297 mm): 4 = 2×2 (A6, 105×148,25), 6 = 2×3 (105×99), 8 = 2×4 (105×74,25).
+  // Așezarea pe coala A4. Cartonașele sunt mereu PORTRET (mai înalte decât late) — hotărârea ei 4.11.2026:
+  //  4  = A4 portret, 2×2, 105 × 148,25 mm (A6)
+  //  6  = A4 peisaj, 3×2, 99 × 105 mm
+  //  8  = A4 peisaj, 4×2, 74,25 × 105 mm (A7)
+  //  6i = A4 portret, 3×2, 70 × 148,5 mm (înguste)
   const ASEZARI = {
-    4: { coloane: 2, randuri: 2, W: 105, H: 148.25, maxNume: 24, pragColoane: 10 },
-    6: { coloane: 2, randuri: 3, W: 105, H: 99, maxNume: 16, pragColoane: 8 },
-    8: { coloane: 2, randuri: 4, W: 105, H: 74.25, maxNume: 12, pragColoane: 6 },
+    '4':  { coala: 'portrait', coloane: 2, randuri: 2, W: 105, H: 148.25, maxNume: 24, pragColoane: 10, calCol: 3 },
+    '6':  { coala: 'landscape', coloane: 3, randuri: 2, W: 99, H: 105, maxNume: 16, pragColoane: 8, calCol: 4 },
+    '8':  { coala: 'landscape', coloane: 4, randuri: 2, W: 74.25, H: 105, maxNume: 12, pragColoane: 6, calCol: 3 },
+    '6i': { coala: 'portrait', coloane: 3, randuri: 2, W: 70, H: 148.5, maxNume: 16, pragColoane: 8, calCol: 2 },
   };
-  function asezare(aspect) { return ASEZARI[+(aspect && aspect.peCoala)] || ASEZARI[4]; }
+  function asezare(aspect) { return ASEZARI[String(aspect && aspect.peCoala)] || ASEZARI['4']; }
   const PALETE = {
     'verde-auriu': { a: '#6f8a4f', b: '#c9a227', c: '#1f4e9a' },
     'auriu': { a: '#b8962e', b: '#d9bd5c', c: '#8a6d1c' },
@@ -121,5 +126,26 @@
     }
   }
 
-  root.FOAIE = { FONTURI, CHENARE, PALETE, IMPLICIT, ASEZARI, asezare, incarcaFont, html, potriveste, coloane };
+  // Foaia-calendar de la începutul teancului: tot anul pe un cartonaș, zilele numerotate, duminicile marcate, de bifat cu pixul.
+  const LUNI_RO = ['Ianuarie', 'Februarie', 'Martie', 'Aprilie', 'Mai', 'Iunie', 'Iulie', 'August', 'Septembrie', 'Octombrie', 'Noiembrie', 'Decembrie'];
+  function calendarHtml(an, aspect) {
+    const fam = FONTURI.find(x => x.nume === aspect.font) || FONTURI[0];
+    const luni = LUNI_RO.map((nume, m) => {
+      const prima = (new Date(an, m, 1).getDay() + 6) % 7;   // 0 = luni
+      const zile = new Date(an, m + 1, 0).getDate();
+      const celule = [];
+      for (let i = 0; i < prima; i++) celule.push('<td></td>');
+      for (let z = 1; z <= zile; z++) { const dum = (prima + z - 1) % 7 === 6; celule.push(`<td${dum ? ' class="dum"' : ''}>${z}</td>`); }
+      while (celule.length % 7) celule.push('<td></td>');
+      const randuri = []; for (let i = 0; i < celule.length; i += 7) randuri.push('<tr>' + celule.slice(i, i + 7).join('') + '</tr>');
+      return `<div class="luna"><div class="luna-nume">${nume}</div><table><tr class="zs"><th>L</th><th>M</th><th>M</th><th>J</th><th>V</th><th>S</th><th class="dum">D</th></tr>${randuri.join('')}</table></div>`;
+    });
+    return `${chenar(aspect)}
+      <div class="foaie calendar" style="font-family:'${fam.nume}', ${fam.fel}">
+        <div class="titlu">${an}</div>
+        <div class="luni">${luni.join('')}</div>
+      </div>`;
+  }
+
+  root.FOAIE = { FONTURI, CHENARE, PALETE, IMPLICIT, ASEZARI, asezare, calendarHtml, incarcaFont, html, potriveste, coloane };
 })(window);
