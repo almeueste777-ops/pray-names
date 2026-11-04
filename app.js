@@ -228,8 +228,18 @@ function aplicaCitirea(p, r) {
 // ---------- pasul 2: verificare ----------
 function deseneazaVerificare() {
   const v = $('#verificare'); v.innerHTML = '';
-  lot.pagini.forEach((p, i) => {
-    const d = document.createElement('div'); d.className = 'pagina-verif';
+  lot.pagini.forEach((p, i) => v.appendChild(paginaVerifUI(p, i)));
+}
+// O schimbare pe o pagină (+ nume, ✕, + secțiune) redesenează DOAR acea pagină. Redesenarea întregii liste golea
+// #verificare și pagina sărea la început (bug raportat de ea, 4.11.2026).
+function redeseneazaPagina(p) {
+  const vechi = [...document.querySelectorAll('#verificare .pagina-verif')].find(el => el.paginaRef === p);
+  if (!vechi) { deseneazaVerificare(); return; }
+  vechi.replaceWith(paginaVerifUI(p, lot.pagini.indexOf(p)));
+}
+function paginaVerifUI(p, i) {
+  {
+    const d = document.createElement('div'); d.className = 'pagina-verif'; d.paginaRef = p;
     const dreapta = document.createElement('div');
     dreapta.innerHTML = `<h3>Pagina ${i + 1} <span class="mic">(${esc(p.sursa)})</span></h3>
       <label>Data pe foaie: <input type="text" data-camp="data" value="${esc(p.data || '')}" placeholder="zz.ll.aaaa" size="10">
@@ -245,7 +255,7 @@ function deseneazaVerificare() {
     };
     p.sectiuni.forEach((s, k) => dreapta.appendChild(sectiuneUI(p, s, k)));
     const plus = document.createElement('button'); plus.className = 'secundar'; plus.textContent = '+ secțiune (altă categorie pe aceeași foaie)';
-    plus.onclick = () => { p.sectiuni.push({ categorie: 'adormiti', nume: [], casa: false }); salveazaLot(); deseneazaVerificare(); };
+    plus.onclick = () => { p.sectiuni.push({ categorie: 'adormiti', nume: [], casa: false }); salveazaLot(); redeseneazaPagina(p); };
     dreapta.appendChild(plus);
     if (p.observatii) { const o = document.createElement('div'); o.className = 'obs'; o.textContent = 'Altceva pe foaie (nu se tipărește): ' + p.observatii; dreapta.appendChild(o); }
     if (p.mini || p.img || p.areImg) {   // întâi miniatura (instant), apoi poza mare când ajunge din IndexedDB
@@ -255,8 +265,9 @@ function deseneazaVerificare() {
       d.appendChild(img);
     }
     else { const g = document.createElement('div'); g.className = 'fara-poza'; g.textContent = 'Poza nu mai e în browser; textul citit a rămas.'; d.appendChild(g); }
-    d.appendChild(dreapta); v.appendChild(d);
-  });
+    d.appendChild(dreapta);
+    return d;
+  }
 }
 function sectiuneUI(p, s, k) {
   const d = document.createElement('div'); d.className = 'sectiune';
@@ -270,8 +281,14 @@ function sectiuneUI(p, s, k) {
   d.querySelector('[data-camp=categorie]').onchange = e => { s.categorie = e.target.value; salveazaLot(); };
   d.querySelector('[data-camp=casa]').checked = !!s.casa;
   d.querySelector('[data-camp=casa]').onchange = e => { s.casa = e.target.checked; salveazaLot(); };
-  d.querySelector('[data-camp=adauga]').onclick = () => { s.nume.push({ nume: '', sigur: true, original: '' }); salveazaLot(); deseneazaVerificare(); };
-  const bs = d.querySelector('[data-camp=sterge-sectiune]'); if (bs) bs.onclick = () => { p.sectiuni.splice(k, 1); salveazaLot(); deseneazaVerificare(); };
+  // se redesenează doar secțiunea (pagina nu sare); cursorul intră direct în căsuța nouă
+  const redeseneaza = () => { const nou = sectiuneUI(p, s, k); d.replaceWith(nou); return nou; };
+  d.querySelector('[data-camp=adauga]').onclick = () => {
+    s.nume.push({ nume: '', sigur: true, original: '' }); salveazaLot();
+    const casute = redeseneaza().querySelectorAll('.nume-rand input[type=text]'); const ultima = casute[casute.length - 1];
+    if (ultima) ultima.focus({ preventScroll: true });
+  };
+  const bs = d.querySelector('[data-camp=sterge-sectiune]'); if (bs) bs.onclick = () => { p.sectiuni.splice(k, 1); salveazaLot(); redeseneazaPagina(p); };
   const lista = d.querySelector('.nume-lista');
   s.nume.forEach((n, j) => {
     const r = document.createElement('div'); r.className = 'nume-rand';
@@ -282,7 +299,7 @@ function sectiuneUI(p, s, k) {
     const inp = r.querySelector('input[type=text]');
     inp.onchange = () => { n.nume = inp.value.trim(); n.sigur = true; n.corectat = false; inp.classList.remove('nesigur'); salveazaLot(); };
     const cb = r.querySelector('[data-camp=ctna]'); cb.checked = !!n.ctna; cb.onchange = () => { n.ctna = cb.checked; salveazaLot(); };
-    r.querySelector('button').onclick = () => { s.nume.splice(j, 1); salveazaLot(); deseneazaVerificare(); };
+    r.querySelector('button').onclick = () => { s.nume.splice(j, 1); salveazaLot(); redeseneaza(); };
     lista.appendChild(r);
   });
   return d;
