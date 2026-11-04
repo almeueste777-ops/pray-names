@@ -79,10 +79,12 @@ Fiecare pagină: poza (clic = mărire) în stânga; în dreapta: data (căsuță
 
 ## 6. Foaia de tipar (pasul 3) — formatul exact
 
-Coală **A4 portret, 210 × 297 mm, margini 0, o singură față**, împărțită în celule egale:
-- **4 pe coală:** 2 coloane × 2 rânduri, celule **105 × 148,25 mm** (A6); maximum 24 de nume pe pomelnic; peste **10 nume → două coloane**.
-- **6 pe coală:** 2 × 3, celule **105 × 99 mm**; max 16 nume; peste 8 → două coloane.
-- **8 pe coală:** 2 × 4, celule **105 × 74,25 mm**; max 12 nume; peste 6 → două coloane.
+Coală **A4, margini 0, o singură față**, împărțită în celule egale. **Cartonașele sunt întotdeauna PORTRET** (mai înalte decât late):
+- **4 pe coală:** A4 **portret**, 2 coloane × 2 rânduri, celule **105 × 148,25 mm** (A6); maximum 24 de nume pe pomelnic; peste **10 nume → două coloane**.
+- **6 pe coală:** A4 **peisaj** (297 × 210), 3 × 2, celule **99 × 105 mm**; max 16 nume; peste 8 → două coloane.
+- **8 pe coală:** A4 **peisaj**, 4 × 2, celule **74,25 × 105 mm** (A7 portret); max 12 nume; peste 6 → două coloane.
+- **6 înguste:** A4 portret, 3 × 2, celule **70 × 148,5 mm**; max 16 nume; peste 8 → două coloane.
+Orientarea paginii de tipar (`@page { size: A4 portrait|landscape }`) se schimbă odată cu așezarea. Un nume nu se rupe niciodată pe două rânduri (`white-space: nowrap`): litera scade până încape.
 Dacă un pomelnic are mai multe nume decât maximul, se continuă pe foi marcate „(continuare)", împărțite echilibrat (49 → 17 + 16 + 16).
 
 **Linii de tăiere** între celule: punctate, 0,4 mm, gri (#9a9a9a), opționale.
@@ -99,6 +101,10 @@ Dacă un pomelnic are mai multe nume decât maximul, se continuă pe foi marcate
 - **Numele:** blocul de nume e **centrat pe foaie**, dar în interiorul blocului **fiecare coloană e aliniată la stânga** (ochiul se întoarce mereu în același loc). Litere mari‑mici (NU majuscule: forma cuvântului se recunoaște dintr‑o privire). Interlinie 1,45 (1,35 pe două coloane). Două coloane umplute de sus în jos, prima ia surplusul, cu o linie verticală subțire între ele (0,3 mm, negru 18%). Mărimea literei: **automată** (cea mai mare dintre 22, 20, 18, 16, 14, 13, 12, 11, 10 pt la care totul încape, măsurând blocul de nume, nu numărând numele) **sau scrisă de mine** în puncte (8–48). Font la alegere, memorat: EB Garamond (implicit), Cormorant Garamond, Lora, Source Serif 4, Noto Serif, Playfair Display, Atkinson Hyperlegible, Inter, Times New Roman, Georgia.
 - **Jos, centrat, o singură dată:** „ctna" și/sau „cu toată casa lor" (12 pt, semibold; 10 pt la 6/8 pe coală).
 - Nimic altceva pe foaie.
+
+## 6b. Foaia‑calendar de la începutul teancului
+
+Opțiune în pasul 3: „foaie‑calendar la început, anul ____". Pune PRIMA o coală cu aceeași așezare (4/6/8 cartonașe, același chenar), fiecare cartonaș = **tot anul**: anul ca titlu, cele 12 luni pe o grilă (3 × 4 la A6; 4 × 3 la 99 × 105; 3 × 4 la A7; 2 × 6 la 70 × 148), fiecare lună cu numele ei, capul de tabel L M M J V S D (săptămâna începe luni), zilele numerotate în celule mici cu contur gri deschis (ca să se poată bifa cu pixul), **duminicile cu roșu**. Fontul cifrelor: Atkinson Hyperlegible / Inter, cifre tabelare, 5,6 pt la A6 (mai mici la cartonașele mici).
 
 ## 7. Date de probă și rezultate așteptate
 
