@@ -171,6 +171,8 @@ dialog input, dialog select { width: 100%; margin-top: 6px; }
   .rand-actiuni { gap: 10px; } .rand-actiuni > button.mare { flex: 1 1 100%; }
   .rand-actiuni.aspect label { flex: 1 1 calc(50% - 10px); min-width: 0; }
   .rand-actiuni.aspect select { flex: 1 1 0; min-width: 0; width: 0; }
+  .rand-actiuni.aspect input[type=number] { flex: 0 1 5.5em; min-width: 4em; }
+  .rand-actiuni.aspect label { flex-wrap: wrap; }
   .cota { display: flex; flex-wrap: wrap; gap: 6px 10px; } .cota .bara-cota { flex: 1 1 100%; width: auto; }
   .pagina-verif { padding: 12px; gap: 12px; }
   .nume-rand .orig { flex: 1 1 100%; min-width: 0; padding-left: 26px; }
