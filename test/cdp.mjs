@@ -2,10 +2,10 @@
 // node cdp.mjs <url> <expresieJS> <poza.png> [ms]
 import { spawn } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
-const [url, expr, poza, ms = '60000'] = process.argv.slice(2);
+const [url, expr, poza, ms = '60000', W = '1200', H = '1400'] = process.argv.slice(2);
 const port = 9333 + Math.floor(Math.random() * 500);
 const edge = spawn('C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
-  ['--headless=new', '--disable-gpu', '--no-first-run', `--remote-debugging-port=${port}`, `--user-data-dir=${process.env.TEMP}/edge-cdp-${port}`, '--window-size=1200,1400', 'about:blank'], { stdio: 'ignore' });
+  ['--headless=new', '--disable-gpu', '--no-first-run', `--remote-debugging-port=${port}`, `--user-data-dir=${process.env.TEMP}/edge-cdp-${port}`, `--window-size=${W},${H}`, 'about:blank'], { stdio: 'ignore' });
 const sleep = t => new Promise(r => setTimeout(r, t));
 let targets;
 for (let i = 0; i < 50; i++) { try { targets = await (await fetch(`http://127.0.0.1:${port}/json`)).json(); if (targets.length) break; } catch {} await sleep(200); }
@@ -21,6 +21,7 @@ ws.onmessage = e => {
   if (m.method === 'Log.entryAdded') console.log('LOG', m.params.entry.level, m.params.entry.text, m.params.entry.url || '');
 };
 await send('Runtime.enable'); await send('Log.enable'); await send('Page.enable');
+await send('Emulation.setDeviceMetricsOverride', { width: +W, height: +H, deviceScaleFactor: 1, mobile: +W < 700 });
 await send('Page.navigate', { url });
 const t0 = Date.now(); let ok = false;
 while (Date.now() - t0 < +ms) {

@@ -273,7 +273,8 @@ function deseneazaFoi() {
   let st = document.getElementById('orientare'); if (!st) { st = document.createElement('style'); st.id = 'orientare'; document.head.appendChild(st); }
   st.textContent = `@page { size: A4 ${peisaj ? 'landscape' : 'portrait'}; margin: 0; }`;
   const coala = (cls) => { const a4 = document.createElement('div'); a4.className = 'a4 asz-' + setari.aspect.peCoala + (taiere ? ' taiere' : '') + (peisaj ? ' peisaj' : '') + (cls ? ' ' + cls : '');
-    a4.style.width = CW + 'mm'; a4.style.height = CH + 'mm'; a4.style.gridTemplateColumns = `repeat(${az.coloane}, ${az.W}mm)`; a4.style.gridTemplateRows = `repeat(${az.randuri}, ${az.H}mm)`; return a4; };
+    a4.style.width = CW + 'mm'; a4.style.height = CH + 'mm'; a4.style.gridTemplateColumns = `repeat(${az.coloane}, ${az.W}mm)`; a4.style.gridTemplateRows = `repeat(${az.randuri}, ${az.H}mm)`;
+    const inv = document.createElement('div'); inv.className = 'coala-inv'; inv.style.setProperty('--w', CW + 'mm'); inv.style.setProperty('--h', CH + 'mm'); inv.appendChild(a4); a4.inv = inv; return a4; };
   const foi = REGULI.construiesteFoi(lot.pagini, az.maxNume);
   const a4uri = REGULI.grupeazaA4(foi, az.coloane * az.randuri);
   const automate = foi.filter(f => f.dataAutomata).length;
@@ -288,17 +289,28 @@ function deseneazaFoi() {
       if (f) d.innerHTML = FOAIE.html(f, setari.aspect);
       a4.appendChild(d);
     }
-    cont.appendChild(a4);
+    cont.appendChild(a4.inv);
   });
   if (setari.aspect.calendar) {   // coala-calendar, prima din teanc
     const a4 = coala('coala-calendar');
     for (let k = 0; k < az.coloane * az.randuri; k++) { const d = document.createElement('div'); d.className = 'a6'; d.style.width = az.W + 'mm'; d.style.height = az.H + 'mm'; d.innerHTML = FOAIE.calendarHtml(+setari.aspect.an || new Date().getFullYear(), setari.aspect); a4.appendChild(d); }
-    cont.prepend(a4);
+    cont.prepend(a4.inv);
   }
   const potriveste = () => { for (const a6 of cont.querySelectorAll('.a6')) FOAIE.potriveste(a6, setari.aspect); };
+  scaleazaColile();
   potriveste();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(potriveste);   // după ce vine fontul de pe net, măsurăm din nou
 }
+// previzualizarea se scalează după lățimea disponibilă (telefon, tabletă, monitor); la tipar scara e 1
+function scaleazaColile() {
+  const cont = $('#foi'), prima = cont.querySelector('.a4'); if (!prima) return;
+  const latimeMm = parseFloat(prima.style.width) || 210, px = latimeMm * 96 / 25.4;
+  const disponibil = cont.clientWidth || document.documentElement.clientWidth;
+  cont.style.setProperty('--scara', String(Math.min(1, disponibil / px)));
+}
+window.addEventListener('resize', scaleazaColile);
+window.addEventListener('beforeprint', () => $('#foi').style.setProperty('--scara', '1'));
+window.addEventListener('afterprint', scaleazaColile);
 $('#btn-tipareste').onclick = () => window.print();
 $('#linii-taiere').onchange = deseneazaFoi;
 
