@@ -98,9 +98,12 @@ dialog input, dialog select { width: 100%; margin-top: 6px; }
 /* ===== Pasul 3: colile A4 cu 4 foi A6 ===== */
 @page { size: A4 portrait; margin: 0; }
 #foi { --scara: 1; }
-.coala-inv { width: calc(var(--w) * var(--scara)); height: calc(var(--h) * var(--scara)); margin: 0 auto 16px; }
-.a4 { width: 210mm; height: 296.5mm; background: #fff; color: #000; display: grid; grid-template-columns: 105mm 105mm; grid-template-rows: 148.25mm 148.25mm; transform: scale(var(--scara)); transform-origin: top left; box-shadow: 0 20px 50px rgba(15,26,46,.25); page-break-after: always; break-after: page; border-radius: 2px; }
-.a4:last-child { page-break-after: auto; break-after: auto; }
+/* Pagina nouă se pune pe ÎNVELIȘ (.coala-inv), nu pe .a4: fiecare .a4 e singurul copil al învelișului, deci
+   „.a4:last-child" prindea TOATE colile → nicio coală nu începea pe pagina ei, colile de 296,5 mm curgeau pe pagini
+   de 297 mm și urcau 0,5 mm pe pagină (≈2 cm la 47 de coli; bug văzut de ea în fereastra de tipar, 4.11.2026). */
+.coala-inv { width: calc(var(--w) * var(--scara)); height: calc(var(--h) * var(--scara)); margin: 0 auto 16px; break-after: page; page-break-after: always; break-inside: avoid; }
+.coala-inv:last-child { break-after: auto; page-break-after: auto; }
+.a4 { width: 210mm; height: 296.5mm; background: #fff; color: #000; display: grid; grid-template-columns: 105mm 105mm; grid-template-rows: 148.25mm 148.25mm; transform: scale(var(--scara)); transform-origin: top left; box-shadow: 0 20px 50px rgba(15,26,46,.25); border-radius: 2px; overflow: hidden; }
 .a6 { position: relative; width: 105mm; height: 148.25mm; overflow: hidden; }
 /* linii de tăiere: între coloane (nu după ultima) și între rânduri (nu după ultimul) */
 .taiere.asz-4 .a6:nth-child(odd), .taiere.asz-6 .a6:not(:nth-child(3n)), .taiere.asz-6i .a6:not(:nth-child(3n)), .taiere.asz-8 .a6:not(:nth-child(4n)) { border-right: .4mm dashed #9a9a9a; }
