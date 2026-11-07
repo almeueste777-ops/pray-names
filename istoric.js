@@ -1,6 +1,10 @@
 // Istoricul versiunilor: se arată la ↻ Actualizări → „Ce s-a schimbat". Cea mai nouă e prima.
 // `versiune` = numărul din sw.js (CACHE = 'pray-names-vNN'); la fiecare publicare cresc ambele și adaug aici ce s-a schimbat, pe înțelesul ei.
 const ISTORIC = [
+  { versiune: 20, data: '7.11.2026', puncte: [
+    'Regulile noi se aplică acum și pe paginile DEJA citite: la pasul 2, caseta „Regulile noi pe paginile deja citite" → „Aplică regulile noi". Paginile pe care le-ai corectat de mână nu se ating; „Anulează" readuce starea de dinainte.',
+    'De acum răspunsul modelului se păstrează pe pagină, deci regulile viitoare se pot reaplica oricând fără să mai citești pagina din nou.',
+  ] },
   { versiune: 19, data: '7.11.2026', puncte: [
     'Buton nou ↻ Actualizări (sus, lângă ⚙): actualizează aplicația și arată ce s-a schimbat.',
   ] },

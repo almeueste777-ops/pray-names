@@ -162,7 +162,7 @@ document.querySelectorAll('.pasi button').forEach(b => b.onclick = () => aratăP
 function aratăPas(n) {
   document.querySelectorAll('.pas').forEach(p => p.classList.toggle('ascuns', p.id !== 'pas-' + n));
   document.querySelectorAll('.pasi button').forEach(b => b.classList.toggle('activ', +b.dataset.pas === n));
-  if (n === 2) deseneazaVerificare();
+  if (n === 2) { deseneazaVerificare(); actualizeazaButoaneReaplicare(); }
   if (n === 3) deseneazaFoi();
   window.scrollTo(0, 0);
 }
@@ -294,7 +294,69 @@ $('#btn-citeste').onclick = async () => {
   actualizeazaButoane(false);
   if (!erori && !oprit) aratăPas(2);
 };
+// ---------- reaplicarea regulilor noi pe paginile DEJA citite (7.11.2026) ----------
+// Regulile noi se aplicau doar la pagini citite după actualizare; paginile încărcate înainte rămâneau cu regulile vechi.
+// Aici se refac din răspunsul modelului (păstrat de acum încolo în `p.ocr`) sau, la paginile vechi, din rândurile originale.
+// Paginile pe care ai corectat ceva de mână NU se ating (decât dacă alegi „toate"); înainte de aplicare se face o copie, cu „Anulează".
+const CHEIE_COPIE = 'pray-names-lot-inainte';
+const fd = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ș|ş/g, 's').replace(/ț|ţ/g, 't').toLowerCase().replace(/^[jy]/, 'i');
+function paginaAtinsa(p) {
+  if (p.editata) return true;
+  if (p.ocr || p.reaplicata) return false;   // citită după actualizare și nemodificată de tine
+  // pagină veche, fără semnul „editată": o ghicim — un nume sigur care nu se află în rândul original, un nume adăugat de mână sau un ctna bifat de tine
+  for (const s of p.sectiuni || []) for (const n of s.nume || []) {
+    if (!n.original) return true;
+    if (n.ctna && !/neam|ctna/i.test(n.original)) return true;
+    if (n.sigur && !n.corectat) {
+      const orig = new Set(String(n.original).split(/[^\p{L}]+/u).filter(Boolean).map(fd));
+      if (String(n.nume).split(/[\s-]+/).filter(t => t && !/\.$/.test(t)).some(t => !orig.has(fd(t)))) return true;
+    }
+  }
+  return false;
+}
+function brutDinPagina(p) {
+  if (p.ocr) return p.ocr;
+  return { sectiuni: (p.sectiuni || []).map(s => ({ titlu: '', categorie: s.categorie, cruce: false,
+    linii: (s.nume || []).filter(n => n.original).map(n => ({ text: n.original, sigur: true })) })), observatii: p.observatii || '' };
+}
+function reaplicaPagina(p) {
+  const vechi = p.sectiuni || [];
+  p.sectiuni = (brutDinPagina(p).sectiuni || []).flatMap(s => REGULI.proceseazaSectiuni(s)).filter(s => s.nume.length || (s.scos && s.scos.length));
+  if (!p.ocr) for (const s of p.sectiuni) if (vechi.some(v => v.casa && v.categorie === s.categorie)) s.casa = true;   // „cu toată casa lor" bifat înainte
+  if (!p.sectiuni.length) p.sectiuni = [{ categorie: 'vii', nume: [], casa: false }];
+  p.editata = false; p.reaplicata = true;
+}
+function reaplicaRegulile(toate) {
+  const citite = lot.pagini.filter(p => p.stare === 'citit' && (p.sectiuni || []).length);
+  const dePus = citite.filter(p => toate || !paginaAtinsa(p));
+  try { localStorage.setItem(CHEIE_COPIE, JSON.stringify({ pagini: lot.pagini.map(p => ({ ...p, img: undefined, mini: undefined, areImg: !!(p.img || p.areImg) })) })); } catch {}
+  for (const p of dePus) reaplicaPagina(p);
+  salveazaLot(); deseneazaVerificare(); actualizeazaButoaneReaplicare();
+  $('#reaplica-stare').textContent = `Gata: regulile noi aplicate pe ${dePus.length} pagini` + (citite.length - dePus.length ? `; ${citite.length - dePus.length} atinse de tine au rămas neschimbate.` : '.') + ' Dacă nu-ți place, apasă „Anulează".';
+}
+function actualizeazaButoaneReaplicare() {
+  const citite = lot.pagini.filter(p => p.stare === 'citit' && (p.sectiuni || []).length);
+  const neatinse = citite.filter(p => !paginaAtinsa(p)).length;
+  $('#btn-reaplica').textContent = `↻ Aplică regulile noi pe paginile neatinse (${neatinse})`;
+  $('#btn-reaplica-toate').textContent = `…pe TOATE (${citite.length}), inclusiv cele corectate de mine`;
+  $('#btn-reaplica').disabled = !neatinse; $('#btn-reaplica-toate').disabled = !citite.length;
+  let are = false; try { are = !!localStorage.getItem(CHEIE_COPIE); } catch {}
+  $('#btn-anuleaza-reaplica').disabled = !are;
+}
+$('#btn-reaplica').onclick = () => reaplicaRegulile(false);
+$('#btn-reaplica-toate').onclick = () => { if (confirm('Pe paginile pe care le-ai corectat de mână, corecturile se pierd (poți apăsa Anulează după). Continui?')) reaplicaRegulile(true); };
+$('#btn-anuleaza-reaplica').onclick = async () => {
+  try {
+    const c = JSON.parse(localStorage.getItem(CHEIE_COPIE) || 'null'); if (!c) return;
+    const acum = new Map(lot.pagini.map(p => [p.id, p]));
+    lot.pagini = c.pagini.map(p => { const v = acum.get(p.id); return { ...p, img: v && v.img, mini: v && v.mini, areImg: !!(v && (v.img || v.areImg)) || p.areImg }; });
+    localStorage.removeItem(CHEIE_COPIE); salveazaLot(); deseneazaVerificare(); actualizeazaButoaneReaplicare();
+    $('#reaplica-stare').textContent = 'Am revenit la starea de dinainte.';
+  } catch (e) { $('#reaplica-stare').textContent = 'Nu am putut reveni: ' + e.message; }
+};
+
 function aplicaCitirea(p, r) {
+  p.editata = false;
   p.ocr = r;
   p.dataText = r.data_albastra || null;                       // DOAR data albastră intră pe foaie
   p.dataAlta = (r.alte_date && r.alte_date.length) ? r.alte_date.join(', ') : null;   // se arată ca sugestie
@@ -335,7 +397,7 @@ function paginaVerifUI(p, i) {
     };
     p.sectiuni.forEach((s, k) => dreapta.appendChild(sectiuneUI(p, s, k)));
     const plus = document.createElement('button'); plus.className = 'secundar'; plus.textContent = '+ secțiune (altă categorie pe aceeași foaie)';
-    plus.onclick = () => { p.sectiuni.push({ categorie: 'adormiti', nume: [], casa: false }); salveazaLot(); redeseneazaPagina(p); };
+    plus.onclick = () => { p.editata = true; p.sectiuni.push({ categorie: 'adormiti', nume: [], casa: false }); salveazaLot(); redeseneazaPagina(p); };
     dreapta.appendChild(plus);
     if (p.observatii) { const o = document.createElement('div'); o.className = 'obs'; o.textContent = 'Altceva pe foaie (nu se tipărește): ' + p.observatii; dreapta.appendChild(o); }
     if (p.mini || p.img || p.areImg) {   // întâi miniatura (instant), apoi poza mare când ajunge din IndexedDB
@@ -358,17 +420,17 @@ function sectiuneUI(p, s, k) {
       ${p.sectiuni.length > 1 ? '<button class="secundar" data-camp="sterge-sectiune">✕ secțiunea</button>' : ''}
     </div>${s.scos && s.scos.length ? `<div class="scos" title="cuvinte care nu sunt nume: nu se tipăresc">Scos din listă (nu sunt nume): <b>${s.scos.map(esc).join(' · ')}</b></div>` : ''}<div class="nume-lista"></div>`;
   d.querySelector('[data-camp=categorie]').value = s.categorie;
-  d.querySelector('[data-camp=categorie]').onchange = e => { s.categorie = e.target.value; salveazaLot(); };
+  d.querySelector('[data-camp=categorie]').onchange = e => { p.editata = true; s.categorie = e.target.value; salveazaLot(); };
   d.querySelector('[data-camp=casa]').checked = !!s.casa;
-  d.querySelector('[data-camp=casa]').onchange = e => { s.casa = e.target.checked; salveazaLot(); };
+  d.querySelector('[data-camp=casa]').onchange = e => { p.editata = true; s.casa = e.target.checked; salveazaLot(); };
   // se redesenează doar secțiunea (pagina nu sare); cursorul intră direct în căsuța nouă
   const redeseneaza = () => { const nou = sectiuneUI(p, s, k); d.replaceWith(nou); return nou; };
   d.querySelector('[data-camp=adauga]').onclick = () => {
-    s.nume.push({ nume: '', sigur: true, original: '' }); salveazaLot();
+    p.editata = true; s.nume.push({ nume: '', sigur: true, original: '' }); salveazaLot();
     const casute = redeseneaza().querySelectorAll('.nume-rand input[type=text]'); const ultima = casute[casute.length - 1];
     if (ultima) ultima.focus({ preventScroll: true });
   };
-  const bs = d.querySelector('[data-camp=sterge-sectiune]'); if (bs) bs.onclick = () => { p.sectiuni.splice(k, 1); salveazaLot(); redeseneazaPagina(p); };
+  const bs = d.querySelector('[data-camp=sterge-sectiune]'); if (bs) bs.onclick = () => { p.editata = true; p.sectiuni.splice(k, 1); salveazaLot(); redeseneazaPagina(p); };
   const lista = d.querySelector('.nume-lista');
   s.nume.forEach((n, j) => {
     const r = document.createElement('div'); r.className = 'nume-rand';
@@ -377,9 +439,9 @@ function sectiuneUI(p, s, k) {
       <span class="orig" title="cum a citit modelul">${nesigur && n.original ? '„' + esc(n.original) + '"' : ''}${n.sugestii && n.sugestii.length ? ' poate: ' + n.sugestii.map(esc).join(' / ') : ''}${n.dinRand ? ' (de pe același rând)' : ''}</span>
       <label class="mic" title="cu tot neamul lui cel adormit"><input type="checkbox" data-camp="ctna"> ctna</label><button class="secundar" title="șterge">✕</button>`;
     const inp = r.querySelector('input[type=text]');
-    inp.onchange = () => { n.nume = inp.value.trim(); n.sigur = true; n.corectat = false; inp.classList.remove('nesigur'); salveazaLot(); };
-    const cb = r.querySelector('[data-camp=ctna]'); cb.checked = !!n.ctna; cb.onchange = () => { n.ctna = cb.checked; salveazaLot(); };
-    r.querySelector('button').onclick = () => { s.nume.splice(j, 1); salveazaLot(); redeseneaza(); };
+    inp.onchange = () => { p.editata = true; n.nume = inp.value.trim(); n.sigur = true; n.corectat = false; inp.classList.remove('nesigur'); salveazaLot(); };
+    const cb = r.querySelector('[data-camp=ctna]'); cb.checked = !!n.ctna; cb.onchange = () => { p.editata = true; n.ctna = cb.checked; salveazaLot(); };
+    r.querySelector('button').onclick = () => { p.editata = true; s.nume.splice(j, 1); salveazaLot(); redeseneaza(); };
     lista.appendChild(r);
   });
   return d;
@@ -440,7 +502,7 @@ $('#linii-taiere').onchange = deseneazaFoi;
 
 // ---------- persistență: textul în localStorage (fără poze), pozele în IndexedDB ----------
 function salveazaLot() {
-  try { localStorage.setItem(CHEIE_LOT, JSON.stringify({ pagini: lot.pagini.map(p => ({ ...p, img: undefined, mini: undefined, ocr: undefined, areImg: !!(p.img || p.areImg) })) })); }
+  try { localStorage.setItem(CHEIE_LOT, JSON.stringify({ pagini: lot.pagini.map(p => ({ ...p, img: undefined, mini: undefined, areImg: !!(p.img || p.areImg) })) })); }
   catch (e) { $('#progres').textContent = 'Nu pot salva lotul în browser (spațiu plin?). Nu închide pagina până nu tipărești.'; console.warn(e); }
 }
 async function incarcaLot() {
