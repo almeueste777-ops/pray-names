@@ -1,6 +1,10 @@
 // Istoricul versiunilor: se arată la ↻ Actualizări → „Ce s-a schimbat". Cea mai nouă e prima.
 // `versiune` = numărul din sw.js (CACHE = 'pray-names-vNN'); la fiecare publicare cresc ambele și adaug aici ce s-a schimbat, pe înțelesul ei.
 const ISTORIC = [
+  { versiune: 22, data: '8.11.2026', puncte: [
+    'Două nume de sex opus pe același rând (Petru-Lavinia) sunt acum DOUĂ persoane: Lavinia vine sub Petru, în coloana verticală. Același sex (Ioana-Andreea) rămâne un singur om cu nume dublu.',
+    'Aplicația știe limba română: un dicționar de ~99.000 de cuvinte românești (luat de pe dexonline) hotărăște ce NU e nume („soarta", „pomenire", „liniștită"…). Ce a scos se vede la pasul 2; „↩ e nume" pune cuvântul la loc și aplicația ține minte.',
+  ] },
   { versiune: 21, data: '8.11.2026', puncte: [
     'Corectură mai rapidă la pasul 2: sus ai „N rânduri de verificat", butonul „Următorul de verificat" și opțiunea „arată doar ce e de verificat" (restul paginii dispare).',
     'La un rând galben: Enter sau ✓ înseamnă „e bine așa" și cursorul sare la următorul galben. Un nume din „poate: …" se alege cu un click.',

@@ -19,6 +19,7 @@ PWA care transformă pomelnicele scrise de mână (scanate în PDF sau poze) în
 - **(7.11.2026)** Pomelnic pe **două coloane**: întâi toată prima coloană de sus în jos, apoi a doua, fără să se amestece.
 - **(7.11.2026)** Abrevieri pe foaie: Părintele ⇒ Pr., Presbitera ⇒ Presb., Arhimandrit ⇒ Arhim., Arhiereu ⇒ Arh., Protosinghel ⇒ Protos., Constantin ⇒ Ctin, Gheorghe ⇒ Ghe. La citire se înțeleg ambele forme.
 - **(7.11.2026)** „Bolnavă", „se roagă", „pentru sănătate", sume, vârste etc. **nu sunt nume** (`lexic.js`): ies din listă și se văd la pasul 2 ca „Scos din listă".
+- **(8.11.2026)** Aplicația „știe româna": `limba-date.js` (~99.000 de cuvinte românești frecvente, din LOC 5.0 dexonline ∩ frecvență, vezi `SURSE-NUME.md`) — un cuvânt obișnuit care nu e prenume iese din listă; „↩ e nume" îl pune la loc și aplicația ține minte. **Sexe diferite pe un rând (Petru‑Lavinia) = două persoane: a doua vine sub prima, în coloană.** Corectură rapidă la pasul 2 + memorie de corecturi (`invatat.js`).
 - **(7.11.2026)** Buton ↻ Actualizări: actualizează aplicația și arată istoricul („Ce s-a schimbat", din `istoric.js`; la fiecare publicare cresc `CACHE` în `sw.js` și adaug o intrare în `istoric.js`).
 - **(7.11.2026)** Cheia API pe telefon: ⚙ Setări → „Pune cheia și pe telefon" (cod QR; cheia nu e în depozit).
 - „cu tot neamul lui/ei cel adormit" ⇒ `ctna` după nume.

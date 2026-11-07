@@ -36,6 +36,7 @@ const CHEIE_INV = 'pray-names-invatat';
 let memInv = INVATAT.gol();
 try { const m = JSON.parse(localStorage.getItem(CHEIE_INV) || 'null'); if (m && m.corectii) memInv = m; } catch {}
 function salveazaInvatat() { try { localStorage.setItem(CHEIE_INV, JSON.stringify(memInv)); } catch {} }
+REGULI.seteazaExceptii(INVATAT.listaNume(memInv));   // cuvintele pe care ea le-a declarat nume nu se mai scot ca „cuvinte obișnuite"
 
 // ---------- cheia API pe telefon (7.11.2026) ----------
 // Cheia NU se pune în depozitul public (oricine ar putea să-ți consume cota). Se mută de pe un dispozitiv pe altul printr-un link
@@ -66,7 +67,7 @@ $('#setari').addEventListener('close', () => {
   salveazaSetari(); actualizeazaButoane();
 });
 // ---------- actualizări + istoric (7.11.2026) ----------
-const FISIERE_APP = ['index.html', 'style.css', 'app.js', 'ocr.js', 'reguli.js', 'nume.js', 'nume-date.js', 'lexic.js', 'invatat.js', 'foaie.js', 'istoric.js', 'sw.js', 'manifest.webmanifest'];
+const FISIERE_APP = ['index.html', 'style.css', 'app.js', 'ocr.js', 'reguli.js', 'nume.js', 'nume-date.js', 'limba-date.js', 'lexic.js', 'invatat.js', 'foaie.js', 'istoric.js', 'sw.js', 'manifest.webmanifest'];
 function versiuneaMea() { return (window.ISTORIC && ISTORIC[0] && ISTORIC[0].versiune) || null; }
 function deseneazaIstoric() {
   const c = $('#act-istoric'); c.textContent = '';
@@ -323,7 +324,7 @@ function paginaAtinsa(p) {
 function brutDinPagina(p) {
   if (p.ocr) return p.ocr;
   return { sectiuni: (p.sectiuni || []).map(s => ({ titlu: '', categorie: s.categorie, cruce: false,
-    linii: (s.nume || []).filter(n => n.original).map(n => ({ text: n.original, sigur: true })) })), observatii: p.observatii || '' };
+    linii: (s.nume || []).filter(n => n.original && !n.dinRand).map(n => ({ text: n.original, sigur: true })) })), observatii: p.observatii || '' };
 }
 function reaplicaPagina(p) {
   const vechi = p.sectiuni || [];
@@ -413,7 +414,7 @@ function aplicaSugestie(nume, sug) {
 }
 $('#btn-urmator').onclick = () => { if (!urmatorulGalben(ultimaCasuta && document.contains(ultimaCasuta) ? ultimaCasuta : null)) $('#ct-galbene').textContent = '✓ Nimic de verificat'; };
 $('#doar-galbene').onchange = e => { $('#verificare').classList.toggle('doar-galbene', e.target.checked); };
-$('#btn-uita-invatat').onclick = () => { if (!confirm('Uit tot ce am învățat din corecturile tale? Paginile deja citite nu se schimbă.')) return; memInv = INVATAT.gol(); salveazaInvatat(); actualizeazaContor(); };
+$('#btn-uita-invatat').onclick = () => { if (!confirm('Uit tot ce am învățat din corecturile tale? Paginile deja citite nu se schimbă.')) return; memInv = INVATAT.gol(); salveazaInvatat(); REGULI.seteazaExceptii([]); actualizeazaContor(); };
 $('#verificare').addEventListener('click', () => setTimeout(actualizeazaContor, 0));
 // O schimbare pe o pagină (+ nume, ✕, + secțiune) redesenează DOAR acea pagină. Redesenarea întregii liste golea
 // #verificare și pagina sărea la început (bug raportat de ea, 4.11.2026).
@@ -472,7 +473,7 @@ function sectiuneUI(p, s, k) {
       <label><input type="checkbox" data-camp="casa"> „cu toată casa lor"</label>
       <button class="secundar" data-camp="adauga">+ nume</button>
       ${p.sectiuni.length > 1 ? '<button class="secundar" data-camp="sterge-sectiune">✕ secțiunea</button>' : ''}
-    </div>${s.scos && s.scos.length ? `<div class="scos" title="cuvinte care nu sunt nume: nu se tipăresc">Scos din listă (nu sunt nume): <b>${s.scos.map(esc).join(' · ')}</b></div>` : ''}<div class="nume-lista"></div>`;
+    </div>${s.scos && s.scos.length ? `<div class="scos" title="cuvinte care nu sunt nume: nu se tipăresc">Scos din listă (nu sunt nume): ${s.scos.map(w => /^\p{L}{3,}$/u.test(w) ? `<button type="button" class="chip scos-cuv" data-scos="${esc(w)}" title="Dacă „${esc(w)}" e de fapt un nume, apasă: îl pun în listă și țin minte">${esc(w)} <span aria-hidden="true">↩ e nume</span></button>` : `<b>${esc(w)}</b>`).join(' ')}</div>` : ''}<div class="nume-lista"></div>`;
   d.querySelector('[data-camp=categorie]').value = s.categorie;
   d.querySelector('[data-camp=categorie]').onchange = e => { p.editata = true; s.categorie = e.target.value; salveazaLot(); };
   d.querySelector('[data-camp=casa]').checked = !!s.casa;
@@ -484,6 +485,20 @@ function sectiuneUI(p, s, k) {
     const casute = redeseneaza().querySelectorAll('.nume-rand input[type=text]'); const ultima = casute[casute.length - 1];
     if (ultima) ultima.focus({ preventScroll: true });
   };
+  // „Scos din listă": un cuvânt care e de fapt nume se pune la loc și aplicația ține minte (nu-l mai scoate niciodată)
+  d.querySelectorAll('[data-scos]').forEach(b => { b.onclick = () => {
+    const w = b.dataset.scos, nume = w.charAt(0).toUpperCase() + w.slice(1);
+    // dacă cuvântul seamănă cu un prenume („castel" ~ Costel), nu-l învăț ca nume: îl pun galben, cu corectura ca sugestie
+    const c = REGULI.corecteazaNume(w);
+    if (c.corectat && c.nume) s.nume.push({ nume: c.nume, sigur: false, corectat: true, original: w, sugestii: [nume] });
+    else {
+      memInv = INVATAT.declaraNume(memInv, nume); salveazaInvatat(); REGULI.seteazaExceptii(INVATAT.listaNume(memInv));
+      s.nume.push({ nume, sigur: false, original: w, sugestii: c.sugestii || [] });
+    }
+    const i = s.scos.indexOf(w); if (i >= 0) s.scos.splice(i, 1);
+    p.editata = true; salveazaLot();
+    redeseneaza(); actualizeazaContor();
+  }; });
   const bs = d.querySelector('[data-camp=sterge-sectiune]'); if (bs) bs.onclick = () => { p.editata = true; p.sectiuni.splice(k, 1); salveazaLot(); redeseneazaPagina(p); };
   const lista = d.querySelector('.nume-lista');
   s.nume.forEach((n, j) => {

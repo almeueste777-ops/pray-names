@@ -3,12 +3,13 @@ const R = require('../reguli.js');
 let ok = 0, rau = 0;
 function eq(a, b, msg) { if (JSON.stringify(a) === JSON.stringify(b)) ok++; else { rau++; console.log('PICA', msg, '\n   primit ', JSON.stringify(a), '\n   asteptat', JSON.stringify(b)); } }
 const L = t => { const r = R.proceseazaLinie(t); return r && r.nume; };
+var LL = t => R.proceseazaLinii(t).map(l => l.nume);
 
 // Două nume, același sex → primul
 eq(L('Ioana - Andreea'), 'Ioana', 'f-f');
-eq(L('Georgiana - Andrei'), 'Georgiana-Andrei', 'f-m rămân amândouă');
+eq(L('Georgiana - Andrei'), 'Georgiana', 'f-m = două persoane: prima linie e Georgiana (Andrei coboară dedesubt)');
 eq(L('Gheorghe-Adrian pt. soarta lui'), 'Ghe', 'm-m + rugăminte (Gheorghe se tipărește Ghe, 7.11.2026)');
-eq(L('Antonia-Ștefan'), 'Antonia-Ștefan', 'f-m');
+eq(L('Antonia-Ștefan'), 'Antonia', 'f-m: prima linie');
 eq(L('Daniel Ciprian'), 'Daniel', 'spațiu, m-m');
 eq(L('Mihai Laurențiu'), 'Mihai', 'm-m');
 eq(L('Andreea-Iuliana'), 'Andreea', 'f-f');
@@ -64,7 +65,7 @@ eq(R.grupeazaA4(Array(9).fill({})).map(a => a.length), [4, 4, 1], 'A4 câte 4');
 eq(L('Pr. Ioan'), 'Pr. Ioan', 'titlu preot');
 eq(L('monahia Teodora'), 'Monahia Teodora', 'titlu monahie');
 eq(L('mon. Teodora'), 'Monah Teodora', 'mon. nu devine Ion');
-eq(L('Ion și Maria'), 'Ion-Maria', '„și" nu e nume');
+eq(LL('Ion și Maria'), ['Ion', 'Maria'], '„și" nu e nume; Maria sub Ion');
 eq(L('Ion și Gheorghe'), 'Ion', '„și" + același sex');
 eq(L('Ion 50 de lei'), 'Ion', 'suma după nume');
 const mf = R.proceseazaLinie('Maria cu fiica Ana'); eq([mf.nume, mf.casa], ['Maria', true], 'cu fiica → casa, un singur nume');
@@ -95,7 +96,7 @@ eq(L('Ana-Maria'), 'Ana-Maria', 'Ana-Maria întreg');
 eq(L('Ana Maria'), 'Ana-Maria', 'Ana Maria cu spațiu');
 eq(L('ANA-MARIA'), 'Ana-Maria', 'majuscule');
 eq(L('Ana-Maria Gabriela'), 'Ana-Maria', 'Ana-Maria + alt nume f → doar Ana-Maria');
-eq(L('Ana-Maria și Ion'), 'Ana-Maria-Ion', 'Ana-Maria + bărbat');
+eq(LL('Ana-Maria și Ion'), ['Ana-Maria', 'Ion'], 'Ana-Maria + bărbat: Ion coboară');
 eq(L('Roxana Gabriela'), 'Roxana', 'două nume f → primul');
 eq(L('Marcela Mihaela'), 'Marcela', 'două nume f → primul');
 eq(L('Maria Ana'), 'Maria', 'ordinea inversă nu e Ana-Maria');
@@ -111,7 +112,6 @@ eq(fd.map(f => [f.data, f.dataAutomata]), [['11.11.2026', true], ['20.10.2026', 
 // ======================= 7.11.2026: cele 5 cerințe noi =======================
 const NUME = require('../nume.js');
 const LEXIC = require('../lexic.js');
-const LL = t => R.proceseazaLinii(t).map(l => l.nume);
 
 // 1. dicționarul mare de pe net
 eq(NUME.toate.length >= 1400, true, 'dicționar mare (' + NUME.toate.length + ' nume)');
@@ -147,7 +147,7 @@ eq(L('Ctin'), 'Ctin', 'Ctin scris de mână rămâne Ctin');
 eq(L('Ghe.'), 'Ghe', 'Ghe. cu punct');
 eq(L('Gh.'), 'Ghe', 'Gh. = Gheorghe');
 eq(L('C-tin'), 'Ctin', 'C-tin');
-eq(L('Ctin Maria'), 'Ctin-Maria', 'Ctin e recunoscut ca bărbat (sex diferit → rămân amândouă)');
+eq(LL('Ctin Maria'), ['Ctin', 'Maria'], 'Ctin e recunoscut ca bărbat (sex diferit → Maria coboară)');
 eq(L('Ghe Ion'), 'Ghe', 'Ghe e bărbat: Ghe + Ion → primul');
 eq(L('Ana-Maria'), 'Ana-Maria', 'Ana-Maria neatinsă de abrevieri');
 eq(L('Constantina'), 'Constantina', 'Constantina nu se scurtează');
@@ -158,7 +158,7 @@ eq(R.scurteaza('Constantin-Ion'), 'Ctin-Ion', 'scurteaza pe nume cu cratimă');
 eq(R.construiesteFoi([{ data: 'x', sectiuni: [{ categorie: 'vii', nume: [{ nume: 'Părintele Gheorghe' }, { nume: 'Constantin' }] }] }])[0].nume, ['Pr. Ghe', 'Ctin'], 'și numele scrise de mână la pasul 2 se scurtează la tipar');
 
 // 4. cel mult 2 nume orizontal; restul coboară în coloană
-eq(LL('Maria Ion Elena Vasile Ana'), ['Maria-Ion', 'Elena', 'Vasile', 'Ana'], 'perechea Maria-Ion, restul câte unul pe linie');
+eq(LL('Maria Ion Elena Vasile Ana'), ['Maria', 'Ion', 'Elena', 'Vasile', 'Ana'], 'toate pe verticală, în ordinea scrisă (Maria-Ion sunt sexe diferite)');
 eq(LL('Maria Elena Ion'), ['Maria', 'Ion'], 'Maria+Elena același sex → Maria; Ion pe linia lui');
 eq(LL('Ion Vasile Gheorghe Mihai'), ['Ion', 'Ghe', 'Mihai'], 'perechea Ion+Vasile → Ion; Ghe și Mihai fiecare pe linie');
 eq(LL('Ioana Andreea'), ['Ioana'], 'două nume → regula perechii, ca până acum');
@@ -166,7 +166,7 @@ eq(LL('Ion'), ['Ion'], 'un nume');
 eq(R.proceseazaLinii('Maria Ion Elena Vasile').every(l => l.original), true, 'fiecare linie are textul original');
 {
   const s = R.proceseazaSectiuni({ titlu: 'Vii', linii: ['Maria Ion Elena Vasile Ana', 'Petru'] })[0];
-  eq(s.nume.map(n => n.nume), ['Maria-Ion', 'Elena', 'Vasile', 'Ana', 'Petru'], 'secțiunea primește numele de pe rând pe linii separate, în ordine');
+  eq(s.nume.map(n => n.nume), ['Maria', 'Ion', 'Elena', 'Vasile', 'Ana', 'Petru'], 'secțiunea primește numele de pe rând pe linii separate, în ordine');
 }
 eq(R.MAX_ORIZONTAL, 2, 'MAX_ORIZONTAL = 2');
 
@@ -216,13 +216,13 @@ eq(LL('Ion și Pr. Vasile'), ['Ion', 'Pr. Vasile'], 'Ion și Pr. Vasile = două 
 eq(LL('Maria, Pr. Ion'), ['Maria', 'Pr. Ion'], 'Maria, Pr. Ion');
 eq(LL('Pr. Ion, Pr. Vasile, Pr. Gheorghe'), ['Pr. Ion', 'Pr. Vasile', 'Pr. Ghe'], 'trei preoți');
 eq(LL('Monahia Teodora și monahia Xenia'), ['Monahia Teodora', 'Monahia Xenia'], 'două monahii');
-eq(LL('Ion, Maria, Elena, Pr. Vasile'), ['Ion-Maria', 'Elena', 'Pr. Vasile'], 'titlul după al 3-lea nume rămâne la Vasile');
+eq(LL('Ion, Maria, Elena, Pr. Vasile'), ['Ion', 'Maria', 'Elena', 'Pr. Vasile'], 'titlul după al 3-lea nume rămâne la Vasile');
 eq(LL('Vasile preotul'), ['Pr. Vasile'], 'titlu după nume, același segment');
 eq(LL('Vasile preotul, Ion diaconul'), ['Pr. Vasile', 'Diac. Ion'], 'titlu după nume, două persoane');
 // 2. toleranța fuzzy nu depășește ce spune regula
 for (const [t, nu] of [['Onisim', 'Anisia'], ['Dumitrache', 'Dumitrana'], ['Glicheria', 'Pulcheria'], ['Stareța', 'Saveta'], ['Iov', 'Ion']])
   eq(L(t) !== nu, true, t + ' nu devine ' + nu);
-eq(LL('Onisim Maria'), ['Onisim-Maria'], 'Maria nu se pierde');
+eq(LL('Onisim Maria'), ['Onisim', 'Maria'], 'Maria nu se pierde');
 // 3. nume din calendar / monahale
 for (const n of ['Simeon', 'Grigorie', 'Rafail', 'Irineu', 'Isaac', 'Hristofor', 'Macrina', 'Natanael', 'Olimpiada', 'Matrona', 'Varsanufie', 'Policarp', 'Taisia'])
   { const l = R.proceseazaLinii(n)[0]; eq([l.nume, l.sigur], [n, true], n + ' e nume sigur'); }
@@ -232,16 +232,16 @@ eq(LL('Ghita Maria').length, 1, 'Ghita Maria: o linie'); eq(LL('Ghita Maria')[0]
 eq(L('Doinița'), 'Doinița', 'diacriticele corecte nu se strică');
 eq(L('Rădița'), 'Rădița', 'Rădița');
 // 5. rugăminte: nu mai înghite numele de după virgulă / „:"
-eq(LL('Ion pt. sănătate, Maria, Elena'), ['Ion-Maria', 'Elena'], 'după rugăminte și virgulă numele revin (pereche Ion-Maria, apoi Elena)');
-eq(LL('pt. sănătate: Ion, Maria'), ['Ion-Maria'], 'după „:" numele se păstrează');
-eq(LL('Pentru Ion și Maria'), ['Ion-Maria'], 'Pentru Ion și Maria');
-eq(LL('Ion - spor, Maria'), ['Ion-Maria'], 'Ion - spor, Maria');
+eq(LL('Ion pt. sănătate, Maria, Elena'), ['Ion', 'Maria', 'Elena'], 'după rugăminte și virgulă numele revin (Ion, Maria, Elena)');
+eq(LL('pt. sănătate: Ion, Maria'), ['Ion', 'Maria'], 'după „:" numele se păstrează');
+eq(LL('Pentru Ion și Maria'), ['Ion', 'Maria'], 'Pentru Ion și Maria');
+eq(LL('Ion - spor, Maria'), ['Ion', 'Maria'], 'Ion - spor, Maria');
 eq(LL('Gheorghe-Adrian pt. soarta lui'), ['Ghe'], 'rugămintea după nume taie restul segmentului');
 // 6. „cu toată casa lor" la forme frecvente
 for (const t of ['Ion și copiii', 'Ion cu fiicele', 'Ion cu nepotul', 'Ion cu copilul', 'Ion cu fam.', 'Ion cu toți ai casei', 'Ion cu cei din casă', 'Ion și fiii'])
   { const l = R.proceseazaLinii(t)[0]; eq([l.nume, l.casa], ['Ion', true], t); }
-eq(R.proceseazaLinii('Ion, Maria și copiii').map(l => [l.nume, l.casa]), [['Ion-Maria', true]], 'Ion, Maria și copiii');
-eq(LL('Ion cu fii, Maria, Elena'), ['Ion-Maria', 'Elena'], 'după „cu fii," numele de pe alte segmente rămân');
+eq(R.proceseazaLinii('Ion, Maria și copiii').map(l => [l.nume, l.casa]), [['Ion', true], ['Maria', true]], 'Ion, Maria și copiii');
+eq(LL('Ion cu fii, Maria, Elena'), ['Ion', 'Maria', 'Elena'], 'după „cu fii," numele de pe alte segmente rămân');
 // 7. titlu lipit de nume
 eq(L('Pr.Ion'), 'Pr. Ion', 'Pr.Ion'); eq(L('Pr.Constantin'), 'Pr. Ctin', 'Pr.Constantin'); eq(L('Arhim.Teofil'), 'Arhim. Teofil', 'Arhim.Teofil');
 // 8. titluri în plus
@@ -265,8 +265,8 @@ eq(R.proceseazaSectiuni({ titlu: 'Vii', linii: ['bolnavă', '50 lei'] })[0].scos
 
 // ======================= reparații după auditul Opus, runda 2 =======================
 // cuvântul de rudenie la început de segment NU pornește „casa" și nu înghite numele
-for (const [t, n] of [['fiica Ioana', ['Ioana']], ['nepotul Andrei', ['Andrei']], ['Ion, fiul Andrei', ['Ion']], ['Fam. Ion și Maria', ['Ion-Maria']],
-  ['Familia: Ion, Maria', ['Ion-Maria']], ['copiii Andrei, Ioana', ['Andrei-Ioana']]]) {
+for (const [t, n] of [['fiica Ioana', ['Ioana']], ['nepotul Andrei', ['Andrei']], ['Ion, fiul Andrei', ['Ion']], ['Fam. Ion și Maria', ['Ion', 'Maria']],
+  ['Familia: Ion, Maria', ['Ion', 'Maria']], ['copiii Andrei, Ioana', ['Andrei', 'Ioana']]]) {
   const r = R.proceseazaLinii(t); eq([r.map(l => l.nume).filter(Boolean), r.some(l => l.casa)], [n, false], t + ' (fără casă, numele rămân)');
 }
 { const r = R.proceseazaLinii('Maria cu fiica Ana'); eq([r[0].nume, r[0].casa], ['Maria', true], 'cu fiica Ana: casă'); }
@@ -276,8 +276,8 @@ eq(LL('Ion preot Maria'), ['Pr. Ion', 'Maria'], 'Ion preot Maria');
 eq(LL('Vasile preotul și preoteasa Maria'), ['Pr. Vasile', 'Preoteasa Maria'], 'preotul și preoteasa');
 eq(LL('Ion Pr. Vasile'), ['Ion', 'Pr. Vasile'], 'prescurtarea se leagă de ce urmează');
 // sedila și ǎ
-eq(L('Ghiţă'), 'Ghiță', 'sedilă → virgulă'); eq(LL('Gheorghiţă Maria'), ['Gheorghiță-Maria'], 'Gheorghiţă Maria: Maria rămâne');
-eq(LL('Costicǎ Maria'), ['Costică-Maria'], 'ǎ → ă');
+eq(L('Ghiţă'), 'Ghiță', 'sedilă → virgulă'); eq(LL('Gheorghiţă Maria'), ['Gheorghiță', 'Maria'], 'Gheorghiţă Maria: Maria rămâne');
+eq(LL('Costicǎ Maria'), ['Costică', 'Maria'], 'ǎ → ă');
 // numerotare și nume rare + cifre
 for (const [t, n] of [['1. Noe', 'Noe'], ['2. Iov', 'Iov'], ['3. Tache', 'Tache'], ['Noe 7 ani', 'Noe'], ['Tuța 50 lei', 'Tuța'], ['3. Ingrid', 'Ingrid'], ['5) Cozma', 'Cozma']]) eq(LL(t), [n], t);
 // necunoscut + cifră nu mai dispare: rămâne galben
@@ -291,6 +291,35 @@ for (const t of ['Ion și tot neamul lui', 'Ion cu tot neamul celor adormiți', 
 eq(LL('x').length >= 0 && R.proceseazaSectiuni({ linii: [{ text: {} }, true] }).length >= 0, true, 'obiect/true nu devin nume');
 eq(R.proceseazaSectiuni({ linii: [{ text: {} }, true] })[0].nume.length, 0, 'Object/True nu sunt nume');
 { let ok2 = true; try { R.construiesteFoi([{ sectiuni: [{ categorie: 'vii' }, null] }, { }]); } catch (e) { ok2 = false; } eq(ok2, true, 'construiesteFoi fără crash pe secțiuni fără nume'); }
+
+// --- 8.11.2026: perechea de sex opus coboară pe linii separate (hotărârea ei: Petru-Lavinia → Lavinia sub Petru) ---
+eq(LL('Petru-Lavinia'), ['Petru', 'Lavinia'], 'Petru-Lavinia: Lavinia sub Petru');
+eq(LL('Lavinia-Petru'), ['Lavinia', 'Petru'], 'ordinea scrisă se păstrează');
+eq(LL('Petru Lavinia'), ['Petru', 'Lavinia'], 'și fără cratimă');
+eq(LL('Ioana-Andreea'), ['Ioana'], 'același sex = un singur om cu nume dublu');
+eq(R.proceseazaLinii('Petru-Lavinia').map(l => !!l.dinRand), [false, true], 'a doua e marcată „de pe același rând"');
+// --- 8.11.2026: limba română întreagă (limba-date.js = LOC 5.0 ∩ frecvență): cuvintele obișnuite nu sunt nume ---
+for (const [t, n] of [['Ion soarta lui Maria', ['Ion', 'Maria']], ['Ion frumoasă', ['Ion']], ['Maria pomenire veșnică', ['Maria']], ['Ana bolnavă', ['Ana']], ['Pr. Ion pătimaș', ['Pr. Ion']]]) eq(LL(t), n, 'cuvânt românesc scos: ' + t);
+eq(LL('Mărgărit'), ['Mărgărit'], 'un singur cuvânt pe rând rămâne (nume rar posibil)');
+eq(LL('Cuminte'), ['Cuminte'], 'cuvânt obișnuit singur pe rând: rămâne');
+eq(R.proceseazaLinii('Cuminte')[0].sigur, false, 'iar la verificare e galben');
+eq(LL('Ion liniștită'), ['Ion'], 'liniștită = cuvânt, nu nume');
+eq(LL('Zamfira'), ['Zamfira'], 'nume necunoscut, nu cuvânt: rămâne');
+eq(LL('Gheorghe Maria'), ['Ghe', 'Maria'], 'nume din dicționar au întâietate');
+eq(R.proceseazaLinii('Ion soarta lui Maria')[0].scos.includes('soarta'), true, 'cuvântul scos se arată la pasul 2');
+// --- auditul Opus 8.11.2026 (limba + perechi) ---
+eq(R.proceseazaLinii('Pr. Mira Ion').map(l => l.nume), ['Pr. Mira', 'Ion'], 'titlul rămâne la Mira, nu sare pe Ion');
+eq(LL('Maica Mira'), ['Maica Mira'], 'Maica Mira: titlul nu dispare');
+eq(LL('Ion la mulți ani'), ['Ion'], '„la mulți ani" nu face o persoană „Ani"');
+eq(LL('Maria, Elena la multi ani').includes('Ani'), false, 'fără diacritice la fel');
+eq(LL('Ion cununați'), ['Ion'], 'ș/ț cu sedilă în sursa de frecvență (cununați)');
+eq(LL('Ion moaștele'), ['Ion'], 'moaștele');
+eq(LL('Ion constructor'), ['Ion'], '„constructor" nu strică (obiecte fără prototip)');
+eq(typeof R.corecteazaNume('constructor').nume, 'string', 'corecteazaNume(constructor) nu aruncă');
+eq(LL('Ion lăuză'), ['Ion'], 'lăuză');
+{ const s = R.proceseazaSectiuni({ categorie: 'vii', linii: ['+ Ion Lumina bolnav'] }); eq([s[0].categorie, s[0].scos.includes('Lumina')], ['adormiti', true], 'scosul unui rând cu cruce merge la adormiți'); }
+{ const s = R.proceseazaSectiuni({ categorie: 'vii', linii: ['Elena', '+ Ion Lumina'] }); eq([s.length, s[1].categorie, s[1].scos, s[0].scos], [2, 'adormiti', ['Lumina'], []], 'Lumina nu rămâne la vii'); }
+R.seteazaExceptii(['Luna']); eq(LL('Ion Luna').length, 1, 'excepția „Luna" scutește și cuvintele din lexicul vechi'); R.seteazaExceptii([]);
 
 console.log(`${ok} ok, ${rau} pică`);
 process.exit(rau ? 1 : 0);

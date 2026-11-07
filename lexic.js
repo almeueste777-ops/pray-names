@@ -61,6 +61,8 @@
     unchi unchiul matusa matusi matusa
     lui ei lor sale sau meu mea mei mele nostru noastra nostri noastre vostri
     cu de din la pe in intru catre fata despre dupa pana prin sub peste fara
+    lauza lauzei lauze ctitori daruitori daruitorii ajutatori ajutatorii chimio alzheimer un clasa
+    bucuresti iasi cluj suceava putna viena timisoara brasov sibiu oradea
   `.split(/\s+/).filter(Boolean));
 
   // Rădăcini: orice cuvânt care începe cu ele (cu cel puțin 3 litere în plus nu e cerut; cuvântul întreg e verificat mai întâi).
@@ -72,7 +74,7 @@
 
   // Fraze care încep o rugăminte: de aici până la capăt rândul NU mai conține nume (regula veche, păstrată).
   // (\b din JavaScript nu înțelege ă/â/î/ș/ț: „roagă" n-ar avea margine → folosim marginile cu litere Unicode.)
-  const RUG_CUV = /(?<![\p{L}\d])(?:pt\.?|ptr\.?|pentru|se\s+roag[ăa]|rog\s+(?:pe\s+)?dumnezeu|s[ăa]n[ăa]tate|spor|succes|amin)(?![\p{L}\d])/iu;
+  const RUG_CUV = /(?<![\p{L}\d])(?:(?:la\s+)?mul[țtţ]i\s+ani|pt\.?|ptr\.?|pentru|se\s+roag[ăa]|rog\s+(?:pe\s+)?dumnezeu|s[ăa]n[ăa]tate|spor|succes|amin)(?![\p{L}\d])/iu;
   const RE_RUGAMINTE = new RegExp(RUG_CUV.source + '.*', 'iu');
   // Luni (după o cifră: „Ion 20 octombrie", „Maria 5 noi"): nu sunt prenume.
   const LUNI = new Set('ian ianuarie feb februarie mar martie apr aprilie mai iun iunie iul iulie aug august sep sept septembrie oct octombrie noi nov noiembrie dec decembrie'.split(' '));
@@ -91,5 +93,12 @@
     if (EXACT_SCURTE.has(k)) return true;
     return RADACINI.some(r => r.length >= 4 && k.startsWith(r));
   }
-  return { CUVINTE, RADACINI, RUG_CUV, RE_RUGAMINTE, esteNenume, esteLuna, prioritar, faraDiacritice };
+  // Limba română întreagă (cuvintele frecvente): limba-date.js, generat de tools/construieste-limba.py din LOC 5.0 (dexonline) ∩ frecvență.
+  // Un cuvânt de aici care NU e prenume din dicționar nu are ce căuta printre nume („soarta", „neamul", „frumoasă", „pomenire").
+  const LIMBA = new Set((typeof LIMBA_DATE !== 'undefined' ? LIMBA_DATE : (typeof require !== 'undefined' ? require('./limba-date.js') : '')).split(' ').filter(Boolean));
+  function esteCuvant(cuvant) {
+    const k = faraDiacritice(cuvant).replace(/[.\-]/g, '');
+    return k.length >= 3 && LIMBA.has(k);
+  }
+  return { CUVINTE, RADACINI, RUG_CUV, RE_RUGAMINTE, esteNenume, esteCuvant, esteLuna, prioritar, faraDiacritice };
 });

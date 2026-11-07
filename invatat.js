@@ -13,7 +13,7 @@
     if (!(m && typeof m === 'object' && m.corectii && typeof m.corectii === 'object' && !Array.isArray(m.corectii))) return gol();
     const curat = {};
     for (const k of Object.keys(m.corectii)) if (typeof m.corectii[k] === 'string' && m.corectii[k]) curat[k] = m.corectii[k];
-    m.corectii = curat; return m;
+    m.corectii = curat; if (m.nume !== undefined && !Array.isArray(m.nume)) m.nume = []; return m;
   };
 
   // Ce a citit aplicația pe rând: textul original al modelului, iar dacă lipsește, valoarea de dinainte de corectură.
@@ -42,5 +42,13 @@
     return n;
   }
   const numara = mem => Object.keys(normeaza(mem).corectii).length;
-  return { fd, gol, invata, uita, aplica, numara };
+  // Cuvinte pe care ea le-a declarat NUME (restaurate din „Scos din listă"): aplicația nu le mai scoate ca „cuvânt obișnuit".
+  function declaraNume(mem, cuvant) {
+    mem = normeaza(mem); if (!Array.isArray(mem.nume)) mem.nume = [];
+    const k = String(cuvant == null ? '' : cuvant).trim(); if (k && !mem.nume.some(x => fd(x) === fd(k))) mem.nume.push(k);
+    if (mem.nume.length > MAX) mem.nume.splice(0, mem.nume.length - MAX);
+    return mem;
+  }
+  const listaNume = mem => (mem && Array.isArray(mem.nume) ? mem.nume.filter(x => typeof x === 'string' && x) : []);
+  return { fd, gol, invata, uita, aplica, numara, declaraNume, listaNume };
 });

@@ -37,6 +37,8 @@
   // Prenume prescurtate pe foaie: Constantin = Ctin, Gheorghe = Ghe. ALIASE = cum le poate scrie ea de mână → numele întreg (pentru dicționar/sex).
   const NUME_SCURT = { constantin: 'Ctin', ctin: 'Ctin', ghe: 'Ghe', gheorghe: 'Ghe' };
   const ALIASE = { ctin: 'Constantin', const: 'Constantin', ghe: 'Gheorghe', gh: 'Gheorghe' };
+  // obiecte-dicționar fără prototip: altfel „constructor"/„toString" din textul citit ar găsi chei moștenite (auditul 8.11: „Ion constructor" dădea „function Object()…")
+  for (const o of [TITLURI, NUME_SCURT, ALIASE]) Object.setPrototypeOf(o, null);
   // Cuvinte de umplutură care nu sunt nume și nu schimbă nimic.
   const STOP = new Set(['si', 'sau', 'de', 'cu', 'la', 'lui', 'ei', 'lor', 'cel', 'cea', 'cei', 'tot', 'toata', 'toti', 'toate', 'din', 'pe',
     'fam', 'familia', 'familiei', 'copiii', 'copii', 'copilul', 'fiul', 'fiica', 'fiii', 'fii', 'fiicele', 'nepotii', 'nepotilor', 'nepoti', 'nepotul', 'nepoata',
@@ -121,6 +123,9 @@
   // Cuvântul de rudenie pornește „casa" DOAR după „cu"/„și": „fiica Ioana" sau „Familia: Ion, Maria" la început de segment sunt nume, nu casă.
   const RE_CASA = /(?<![\p{L}\d])(?:toat[ăa]\s+(?:casa|familia)(?:\s+lor)?|to[țt]i\s+ai\s+casei|cei\s+din\s+cas[ăa]|(?:cu|[șs]i)\s+(?:(?:toți|toti|cei)\s+)?(?:fii+|fiul|fiica|fiicele|fiice|fiilor|fiului|copii+|copilul|copiilor|nepo[țt]i\w*|nepoata|nepoate|nepotul|familia|fam|flia)(?![\p{L}\d]).*)/iu;
   const RE_RUGAMINTE = LEXIC.RE_RUGAMINTE;   // „pt.", „pentru", „se roagă", „sănătate"… → restul rândului e rugăminte, nu nume
+  // Cuvinte pe care ea le-a declarat NUME (le-a restaurat din „Scos din listă"): nu se mai scot ca „cuvânt obișnuit". Se umple din app.js.
+  const EXCEPTII = new Set();
+  function seteazaExceptii(lista) { EXCEPTII.clear(); for (const w of lista || []) if (typeof w === 'string') EXCEPTII.add(faraDiacritice(w)); }
   const MAX_ORIZONTAL = 2;                   // cel mult 2 nume citite pe același rând (hotărârea ei 7.11.2026)
 
   // Forma de pe FOAIE: titluri și prenume scurtate (Părintele Constantin → Pr. Ctin). Idempotentă; o folosesc și numele scrise de mână la pasul 2.
@@ -154,7 +159,7 @@
     t = t.replace(/(\p{L}{2,})\.(?=\p{L})/gu, '$1. ');                                      // „Pr.Ion" → „Pr. Ion"
     t = t.replace(/(?<![\p{L}\d])C-tina(?![\p{L}\d])\.?/giu, 'Constantina').replace(/(?<![\p{L}\d])C-tin(?![\p{L}\d])\.?/giu, 'Ctin');
     let casa = false;
-    const tokens = [];
+    const tokens = [], candidatiLimba = [];
     let dupaCifra = false;   // „Ioan 5 ani", „Ion 20 octombrie": cuvântul de după o cifră e vârstă/lună, nu prenume
     for (const seg of t.split(/[;,]/)) {   // fiecare segment (între virgule) are rugămintea, familia și titlurile lui
       let s = seg;
@@ -185,12 +190,17 @@
         dupaCifra = false;
         // întâi dicționarul de nume (un nume care seamănă cu un cuvânt obișnuit rămâne nume), apoi lexicul „nu e nume"
         const c = corecteazaNume(b);
-        if (!c.sigur && LEXIC.esteNenume(b)) { scos.push(b); continue; }
+        if (!c.sigur && LEXIC.esteNenume(b) && !EXCEPTII.has(faraDiacritice(b))) { scos.push(b); continue; }
+        // cuvânt obișnuit al limbii române (dicționarul întreg), care nu e prenume: iese din listă; dacă pe rând nu rămâne alt nume, se redă galben (mai jos)
+        // (nu după un titlu: „Maica Mira", „Pr. Mira Ion" → după titlu vine un nume, deci cuvântul rămâne nume galben și titlul nu sare pe altcineva)
+        if (!c.sigur && !asteapta.length && LEXIC.esteCuvant(b) && !EXCEPTII.has(faraDiacritice(b))) { c.titluri = []; candidatiLimba.push({ c, b }); scos.push(b); continue; }
         if (c.sigur && LEXIC.prioritar(b)) c.ambiguu = true;   // „nora", „tanti": mai degrabă rudenie decât prenume, dacă pe rând mai e un nume
         c.titluri = asteapta; asteapta = []; ultimul = c; dupaNume = true; tokens.push(c);
       }
       if (asteapta.length && ultimul && !ultimul.titluri.length) ultimul.titluri = asteapta;   // titlu DUPĂ nume, în același segment: „Cleopa arhimandritul"
     }
+    // un rând fără nimic altceva decât 1-2 cuvinte „obișnuite": mai degrabă prenume rar necunoscut decât gunoi → rămân, galbene, la verificare
+    if (!tokens.length && candidatiLimba.length && candidatiLimba.length <= 2) for (const { c, b } of candidatiLimba) { const i = scos.lastIndexOf(b); if (i >= 0) scos.splice(i, 1); c.sigur = false; tokens.push(c); }
     if (tokens.some(c => !c.ambiguu)) { for (const c of tokens.filter(c => c.ambiguu)) scos.push(c.nume); for (let i = tokens.length - 1; i >= 0; i--) if (tokens[i].ambiguu) tokens.splice(i, 1); }
     const baza = { ctna, casa, cruce, original, scos };
     if (!tokens.length) return (casa || ctna || scos.length) ? [{ ...baza, nume: '', sigur: true, corectat: false }] : [];
@@ -200,14 +210,20 @@
     // perechea orizontală = primele 2 nume, dar un nume cu titlu propriu („Ion, Pr. Vasile") e altă persoană: nu se contopește cu cel dinainte
     // și o persoană cu titlu e luată singură („Pr. Vasile" + „Maria" = două persoane, nu un nume dublu Vasile-Maria)
     const pereche = parti[0].titluri && parti[0].titluri.length ? [parti[0]] : parti.slice(0, MAX_ORIZONTAL).filter((p, i) => i === 0 || !(p.titluri && p.titluri.length));
+    let cobor = [];   // numele care coboară pe linia lui, în coloană
     {
       let alese = pereche, sigur = pereche.every(p => p.sigur);
       if (pereche.length === 2) {
         const [a, b] = pereche;
-        if (a.sex && b.sex) { if (a.sex === b.sex) alese = [a]; }   // același sex → doar primul; sexe diferite → rămân amândouă cu cratimă
-        else sigur = false;                                          // sex necunoscut → păstrăm ambele, marcăm
+        if (a.sex && b.sex) {
+          if (a.sex === b.sex) alese = [a];   // același sex → e un singur om cu nume dublu (Ioana-Andreea): doar primul
+          else { alese = [a]; cobor = [b]; sigur = a.sigur; }   // sexe diferite (Petru-Lavinia) = DOUĂ persoane: a doua vine sub prima, în coloană (hotărârea ei 8.11.2026)
+        }
+        else sigur = false;                                          // sex necunoscut → păstrăm ambele legate, marcăm galben
       }
-      linii.push({ ...baza, nume: prefix(pereche[0]) + alese.map(p => p.nume).join('-'), sigur, corectat: pereche.some(p => p.corectat), sugestii: pereche.flatMap(p => p.sugestii || []) });
+      linii.push({ ...baza, nume: prefix(pereche[0]) + alese.map(p => p.nume).join('-'), sigur, corectat: alese.some(p => p.corectat), sugestii: alese.flatMap(p => p.sugestii || []) });
+      for (const p of cobor)
+        linii.push({ ...baza, scos: [], nume: prefix(p) + p.nume, sigur: p.sigur, corectat: p.corectat, sugestii: p.sugestii || [], original: p.original || p.nume, dinRand: true });
     }
     for (const p of parti.slice(pereche.length))   // al 3-lea, al 4-lea… nume de pe rând (și cele cu titlu propriu): fiecare pe linia lui, în coloană
       linii.push({ ...baza, scos: [], nume: prefix(p) + p.nume, sigur: p.sigur, corectat: p.corectat, sugestii: p.sugestii || [], original: p.original || p.nume, dinRand: true });
@@ -288,14 +304,17 @@
       }
     }
     const casa = toate.some(n => n.casa) || /(?<![\p{L}])cu\s+(fii+|copii+|nepo[țt]i\w*|toat[ăa]\s+casa|familia)/iu.test(String(s.observatii || ''));
-    const scos = toate.flatMap(n => n.scos || []);
     const nume = toate.filter(n => n.nume);
     const categorie = s.cruce ? 'adormiti' : (s.categorie === 'adormiti' || s.categorie === 'vii') ? s.categorie : categorieDinTitlu(String(s.titlu == null ? '' : s.titlu), false);
     const cuCruce = categorie === 'vii' ? nume.filter(n => n.cruce) : [];
+    // ce s-a scos de pe un rând cu cruce (✝) merge la secțiunea adormiților, ca să se vadă acolo și „↩ e nume" să-l pună la categoria bună (auditul 8.11)
+    const laAdormiti = n => categorie === 'vii' && n.cruce;
+    const scos = toate.filter(n => !laAdormiti(n)).flatMap(n => n.scos || []);
+    const scosCruce = toate.filter(laAdormiti).flatMap(n => n.scos || []);
     const rezultat = [];
     const principale = nume.filter(n => !cuCruce.includes(n));
-    if (principale.length || !cuCruce.length) rezultat.push({ categorie, nume: principale, casa, scos });
-    if (cuCruce.length) rezultat.push({ categorie: 'adormiti', nume: cuCruce, casa: false, scos: [] });
+    if (principale.length || !(cuCruce.length || scosCruce.length)) rezultat.push({ categorie, nume: principale, casa, scos });
+    if (cuCruce.length || scosCruce.length) rezultat.push({ categorie: 'adormiti', nume: cuCruce, casa: false, scos: scosCruce });
     return rezultat;
   }
   function proceseazaSectiune(s) { return proceseazaSectiuni(s)[0] || { categorie: 'vii', nume: [], casa: false }; }
@@ -327,5 +346,5 @@
 
   function grupeazaA4(foi, peCoala) { peCoala = peCoala || 4; const a4 = []; for (let i = 0; i < foi.length; i += peCoala) a4.push(foi.slice(i, i + peCoala)); return a4; }
 
-  return { dataTiparirii, proceseazaLinie, proceseazaLinii, scurteaza, ordoneazaLinii, MAX_ORIZONTAL, proceseazaSectiune, proceseazaSectiuni, categorieDinTitlu, parseazaData, construiesteFoi, grupeazaA4, corecteazaNume, MAX_NUME_PE_FOAIE };
+  return { seteazaExceptii, dataTiparirii, proceseazaLinie, proceseazaLinii, scurteaza, ordoneazaLinii, MAX_ORIZONTAL, proceseazaSectiune, proceseazaSectiuni, categorieDinTitlu, parseazaData, construiesteFoi, grupeazaA4, corecteazaNume, MAX_NUME_PE_FOAIE };
 });

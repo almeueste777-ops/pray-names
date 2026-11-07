@@ -14,7 +14,7 @@ eq('+ Mihail (cel pomenit)', ['Mihail']);
 for (const [t, n] of [['+ Ion', 'Ion'], ['+ Elena', 'Elena'], ['+ Constantin', 'Ctin'], ['+ Elisabeta', 'Elisabeta'], ['+ Ecaterina', 'Ecaterina'], ['+ Vasile', 'Vasile']]) eq(t, [n]);
 eq('și pe toți cei adormiți din neamul lor.', []);
 // parastas.md – exemplu pe UN singur rând: mai mult de 2 nume orizontal → restul în coloană
-eq('Ioan Maria Gheorghe Elena Nicolae', ['Ioan-Maria', 'Ghe', 'Elena', 'Nicolae']);
+eq('Ioan Maria Gheorghe Elena Nicolae', ['Ioan', 'Maria', 'Ghe', 'Elena', 'Nicolae']);
 eq('preotul Nicolae Ioan Maria Alexandru Ecaterina Gheorghe', ['Pr. Nicolae', 'Ioan', 'Maria', 'Alexandru', 'Ecaterina', 'Ghe']);   // preotul e luat singur; nimeni nu se pierde
 // ortodox.md / parastas.md – clerici cu treapta ÎNAINTEA numelui
 eq('preotul Ioan', ['Pr. Ioan']);

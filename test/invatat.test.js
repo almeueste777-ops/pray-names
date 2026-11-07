@@ -59,5 +59,11 @@ eq(I.numara({ corectii: [1, 2] }), 0, 'array nu e memorie');
 // re-învățarea mută cheia la coadă
 { let q = I.invata(I.invata(I.gol(), 'a1', 'A'), 'b1', 'B'); q = I.invata(q, 'a1', 'A2'); eq(Object.keys(q.corectii), ['b1', 'a1'], 'cheia corectată recent trece la coadă'); }
 
+// cuvinte declarate nume (restaurate din „Scos din listă")
+{ let q = I.declaraNume(I.gol(), 'Mărgărit'); q = I.declaraNume(q, 'mărgărit'); q = I.declaraNume(q, ''); eq(I.listaNume(q), ['Mărgărit'], 'fără dubluri, fără goale'); eq(I.listaNume({ nume: 5 }), [], 'listă stricată'); }
+// legătura cu limba română: cuvântul declarat nume nu mai e scos
+{ R.seteazaExceptii(['Cuminte']); eq(R.proceseazaLinii('Ion Cuminte').map(l => [l.nume, l.sigur]), [['Ion-Cuminte', false]], 'exceptat: rămâne nume (sex necunoscut → legat, galben)');
+  R.seteazaExceptii([]); eq(R.proceseazaLinii('Ion Cuminte').map(l => l.nume), ['Ion'], 'fără excepție: cuvânt obișnuit, scos'); }
+
 console.log(`${ok} ok, ${rau} pică`);
 process.exit(rau ? 1 : 0);
