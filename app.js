@@ -31,6 +31,12 @@ function incarcaSetari() { try { return Object.assign({ furnizor: 'gemini', chei
 function salveazaSetari() { try { localStorage.setItem(CHEIE_SET, JSON.stringify(setari)); } catch {} }
 setari.aspect = Object.assign({ ...FOAIE.IMPLICIT }, setari.aspect || {});
 
+// ---------- memoria de corecturi (învață din ce corectezi la pasul 2) ----------
+const CHEIE_INV = 'pray-names-invatat';
+let memInv = INVATAT.gol();
+try { const m = JSON.parse(localStorage.getItem(CHEIE_INV) || 'null'); if (m && m.corectii) memInv = m; } catch {}
+function salveazaInvatat() { try { localStorage.setItem(CHEIE_INV, JSON.stringify(memInv)); } catch {} }
+
 // ---------- cheia API pe telefon (7.11.2026) ----------
 // Cheia NU se pune în depozitul public (oricine ar putea să-ți consume cota). Se mută de pe un dispozitiv pe altul printr-un link
 // cu cheia după „#" (partea de după # nu pleacă niciodată către server): pe calculator apare ca cod QR, telefonul îl scanează,
@@ -60,7 +66,7 @@ $('#setari').addEventListener('close', () => {
   salveazaSetari(); actualizeazaButoane();
 });
 // ---------- actualizări + istoric (7.11.2026) ----------
-const FISIERE_APP = ['index.html', 'style.css', 'app.js', 'ocr.js', 'reguli.js', 'nume.js', 'nume-date.js', 'lexic.js', 'foaie.js', 'istoric.js', 'sw.js', 'manifest.webmanifest'];
+const FISIERE_APP = ['index.html', 'style.css', 'app.js', 'ocr.js', 'reguli.js', 'nume.js', 'nume-date.js', 'lexic.js', 'invatat.js', 'foaie.js', 'istoric.js', 'sw.js', 'manifest.webmanifest'];
 function versiuneaMea() { return (window.ISTORIC && ISTORIC[0] && ISTORIC[0].versiune) || null; }
 function deseneazaIstoric() {
   const c = $('#act-istoric'); c.textContent = '';
@@ -322,6 +328,7 @@ function brutDinPagina(p) {
 function reaplicaPagina(p) {
   const vechi = p.sectiuni || [];
   p.sectiuni = (brutDinPagina(p).sectiuni || []).flatMap(s => REGULI.proceseazaSectiuni(s)).filter(s => s.nume.length || (s.scos && s.scos.length));
+  INVATAT.aplica(memInv, p.sectiuni);
   if (!p.ocr) for (const s of p.sectiuni) if (vechi.some(v => v.casa && v.categorie === s.categorie)) s.casa = true;   // „cu toată casa lor" bifat înainte
   if (!p.sectiuni.length) p.sectiuni = [{ categorie: 'vii', nume: [], casa: false }];
   p.editata = false; p.reaplicata = true;
@@ -363,6 +370,7 @@ function aplicaCitirea(p, r) {
   p.data = REGULI.parseazaData(p.dataText) || null;
   p.observatii = r.observatii || '';
   p.sectiuni = (r.sectiuni || []).flatMap(s => REGULI.proceseazaSectiuni(s)).filter(s => s.nume.length || (s.scos && s.scos.length));   // o secțiune doar cu „scos" rămâne vizibilă la pasul 2
+  INVATAT.aplica(memInv, p.sectiuni);   // ce ai corectat tu data trecută se aplică singur
   if (p.sectiuni.length && /\bcu\s+(fii|copii|nepo|toat[ăa]\s+casa)/i.test(p.observatii)) p.sectiuni[0].casa = true;
   if (!p.sectiuni.length) p.sectiuni = [{ categorie: 'vii', nume: [], casa: false }];
 }
@@ -371,7 +379,42 @@ function aplicaCitirea(p, r) {
 function deseneazaVerificare() {
   const v = $('#verificare'); v.innerHTML = '';
   lot.pagini.forEach((p, i) => v.appendChild(paginaVerifUI(p, i)));
+  actualizeazaContor();
 }
+// Rândurile „de verificat" = galbene (nesigure sau corectate de dicționar). Contorul, filtrul și „Următorul" te duc direct la ele.
+const esteGalben = n => !n.sigur || n.corectat;
+function actualizeazaContor() {
+  const v = $('#verificare'); if (!v) return;
+  const galbene = v.querySelectorAll('.nume-rand.galben-rand').length;
+  v.querySelectorAll('.pagina-verif').forEach(el => el.classList.toggle('fara-galben', !el.querySelector('.nume-rand.galben-rand')));
+  v.querySelectorAll('.pagina-verif').forEach(el => {   // butonul „Acceptă cele N galbene" arată mereu câte au rămas
+    const b = el.querySelector('.accepta-pagina'); if (!b || !el.paginaRef) return;
+    const n = el.paginaRef.sectiuni.reduce((a, s) => a + s.nume.filter(x => esteGalben(x) && x.nume && !(x.sugestii && x.sugestii.length)).length, 0);
+    b.hidden = !n; b.textContent = `✓ Acceptă galbenele de pe pagină (${n})`;
+  });
+  const ct = $('#ct-galbene'); if (ct) ct.textContent = galbene ? `${galbene} rânduri de verificat` : '✓ Nimic de verificat';
+  const inv = $('#ct-invatat'); if (inv) inv.textContent = INVATAT.numara(memInv) ? `Am învățat ${INVATAT.numara(memInv)} corecturi de la tine` : 'Încă nu am învățat nimic de la tine';
+}
+function urmatorulGalben(dupa) {
+  const toate = [...document.querySelectorAll('#verificare .nume-rand.galben-rand input[type=text]')].filter(i => i.offsetParent);
+  const i = dupa ? toate.findIndex(x => x === dupa || (dupa.compareDocumentPosition(x) & Node.DOCUMENT_POSITION_FOLLOWING)) : 0;
+  const t = toate[i >= 0 ? i : 0]; if (!t) return false;
+  t.scrollIntoView({ block: 'center', behavior: 'smooth' }); t.focus({ preventScroll: true }); t.select();
+  return true;
+}
+// Ultima căsuță în care a stat cursorul: de la ea pornește „Următorul" (după click pe buton, activeElement e butonul, nu căsuța)
+let ultimaCasuta = null;
+// Sugestie într-un rând cu două nume („Marin-Ioan"): se schimbă doar numele vizat (cel cu cel mai lung început comun), nu tot rândul.
+function aplicaSugestie(nume, sug) {
+  const jetoane = String(nume).split('-'); if (jetoane.length < 2) return sug;
+  const pref = (a, b) => { a = INVATAT.fd(a); b = INVATAT.fd(b); let k = 0; while (k < a.length && k < b.length && a[k] === b[k]) k++; return k; };
+  let bun = 0; jetoane.forEach((t, i) => { if (pref(t, sug) > pref(jetoane[bun], sug)) bun = i; });
+  jetoane[bun] = sug; return jetoane.join('-');
+}
+$('#btn-urmator').onclick = () => { if (!urmatorulGalben(ultimaCasuta && document.contains(ultimaCasuta) ? ultimaCasuta : null)) $('#ct-galbene').textContent = '✓ Nimic de verificat'; };
+$('#doar-galbene').onchange = e => { $('#verificare').classList.toggle('doar-galbene', e.target.checked); };
+$('#btn-uita-invatat').onclick = () => { if (!confirm('Uit tot ce am învățat din corecturile tale? Paginile deja citite nu se schimbă.')) return; memInv = INVATAT.gol(); salveazaInvatat(); actualizeazaContor(); };
+$('#verificare').addEventListener('click', () => setTimeout(actualizeazaContor, 0));
 // O schimbare pe o pagină (+ nume, ✕, + secțiune) redesenează DOAR acea pagină. Redesenarea întregii liste golea
 // #verificare și pagina sărea la început (bug raportat de ea, 4.11.2026).
 function redeseneazaPagina(p) {
@@ -389,6 +432,17 @@ function paginaVerifUI(p, i) {
       <span class="mic eroare" data-camp="data-eroare"></span>
       ${p.stare === 'eroare' ? `<p class="eroare">Eroare la citire: ${esc(p.eroare)}</p>` : ''}
       ${p.stare !== 'citit' && p.stare !== 'eroare' ? `<p class="eroare">Pagina nu a fost citită încă (pasul 1).</p>` : ''}`;
+    // „Acceptă galbenele": un singur click pentru rândurile galbene la care nu e de ales între mai multe nume (cele cu „poate: …" rămân, cer decizia ta)
+    const deAcceptat = p.sectiuni.reduce((a, s) => a + s.nume.filter(n => esteGalben(n) && n.nume && !(n.sugestii && n.sugestii.length)).length, 0);
+    if (deAcceptat) {
+      const h = dreapta.querySelector('h3'), b = document.createElement('button'); b.type = 'button'; b.className = 'secundar accepta-pagina';
+      b.textContent = `✓ Acceptă galbenele de pe pagină (${deAcceptat})`; b.title = 'Le las așa cum sunt și țin minte, ca data viitoare să nu mai fie galbene. Rândurile cu „poate: …" rămân, pentru că trebuie să alegi tu.';
+      b.onclick = () => {
+        for (const s of p.sectiuni) for (const n of s.nume) if (esteGalben(n) && n.nume && !(n.sugestii && n.sugestii.length)) { memInv = INVATAT.invata(memInv, n.original || n.nume, n.nume); n.sigur = true; n.corectat = false; n.invatat = false; }
+        p.editata = true; salveazaInvatat(); salveazaLot(); redeseneazaPagina(p); actualizeazaContor();
+      };
+      h.after(b);
+    }
     const inpData = dreapta.querySelector('[data-camp=data]');
     inpData.onchange = () => {
       const t = inpData.value.trim(), n = REGULI.parseazaData(t);
@@ -434,14 +488,40 @@ function sectiuneUI(p, s, k) {
   const lista = d.querySelector('.nume-lista');
   s.nume.forEach((n, j) => {
     const r = document.createElement('div'); r.className = 'nume-rand';
-    const nesigur = !n.sigur || n.corectat;
+    const nesigur = esteGalben(n);
+    r.className = 'nume-rand' + (nesigur ? ' galben-rand' : '');
+    const sugestii = (n.sugestii || []).map(x => `<button type="button" class="chip" data-sug="${esc(x)}" title="pune acest nume">${esc(x)}</button>`).join('');
     r.innerHTML = `<span class="mic">${j + 1}.</span><input type="text" class="${nesigur ? 'nesigur' : ''}" value="${esc(n.nume)}">
-      <span class="orig" title="cum a citit modelul">${nesigur && n.original ? '„' + esc(n.original) + '"' : ''}${n.sugestii && n.sugestii.length ? ' poate: ' + n.sugestii.map(esc).join(' / ') : ''}${n.dinRand ? ' (de pe același rând)' : ''}</span>
-      <label class="mic" title="cu tot neamul lui cel adormit"><input type="checkbox" data-camp="ctna"> ctna</label><button class="secundar" title="șterge">✕</button>`;
+      <span class="orig" title="cum a citit modelul">${nesigur && n.original ? '„' + esc(n.original) + '"' : ''}${sugestii ? ' poate: ' + sugestii : ''}${n.dinRand ? ' (de pe același rând)' : ''}${n.invatat ? ' <i title="am pus singură, din corecturile tale de data trecută">✓ învățat</i>' : ''}</span>
+      ${nesigur ? '<button type="button" class="secundar ok-rand" title="Corect așa (Enter) — țin minte și trec la următorul">✓</button>' : ''}
+      <label class="mic" title="cu tot neamul lui cel adormit"><input type="checkbox" data-camp="ctna"> ctna</label><button class="secundar" data-camp="sterge" title="șterge">✕</button>`;
     const inp = r.querySelector('input[type=text]');
-    inp.onchange = () => { p.editata = true; n.nume = inp.value.trim(); n.sigur = true; n.corectat = false; inp.classList.remove('nesigur'); salveazaLot(); };
+    // Un rând galben rezolvat (corectat de tine, ales din sugestii sau doar confirmat) se ține minte: data viitoare nu mai e galben.
+    const rezolva = valoare => {
+      const eraGalben = esteGalben(n), eraInvatat = !!n.invatat, citit = n.invatatDin || n.original || n.nume;
+      if (!valoare && eraGalben) return false;   // un rând galben golit rămâne galben, nu devine „rezolvat" fără nume
+      p.editata = true; n.nume = valoare; n.sigur = true; n.corectat = false; delete n.sugestii; n.invatat = false;
+      if ((eraGalben || eraInvatat) && valoare) {   // și corectura peste un rând învățat se ține minte (sau se uită, dacă ea revine la ce citise modelul)
+        memInv = (eraInvatat && n.original && valoare === String(n.original).trim()) ? INVATAT.uita(memInv, citit) : INVATAT.invata(memInv, citit, valoare);
+        salveazaInvatat();
+      }
+      inp.value = valoare; inp.classList.remove('nesigur'); r.classList.remove('galben-rand');
+      r.querySelector('.orig').textContent = ''; const ok = r.querySelector('.ok-rand'); if (ok) ok.remove();
+      salveazaLot(); actualizeazaContor();
+      return true;
+    };
+    inp.onfocus = () => { ultimaCasuta = inp; };
+    inp.onchange = () => { const v = inp.value.trim(); if (v !== n.nume || esteGalben(n)) rezolva(v); };
+    inp.onkeydown = e => {
+      if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;   // Enter care doar încheie o compoziție (IME) nu înseamnă „gata"
+      e.preventDefault(); const v = inp.value.trim(), eraGalben = esteGalben(n);
+      if (v !== n.nume || eraGalben) rezolva(v);
+      if (eraGalben) urmatorulGalben(inp);   // pe un rând deja bun (ex. nume nou din „+ nume") Enter nu te mută în altă parte
+    };
+    const okb = r.querySelector('.ok-rand'); if (okb) okb.onclick = () => { if (rezolva(inp.value.trim())) urmatorulGalben(inp); };
+    r.querySelectorAll('[data-sug]').forEach(b => { b.onclick = () => { if (rezolva(aplicaSugestie(n.nume, b.dataset.sug))) urmatorulGalben(inp); }; });
     const cb = r.querySelector('[data-camp=ctna]'); cb.checked = !!n.ctna; cb.onchange = () => { p.editata = true; n.ctna = cb.checked; salveazaLot(); };
-    r.querySelector('button').onclick = () => { p.editata = true; s.nume.splice(j, 1); salveazaLot(); redeseneaza(); };
+    r.querySelector('[data-camp=sterge]').onclick = () => { p.editata = true; s.nume.splice(j, 1); salveazaLot(); redeseneaza(); };
     lista.appendChild(r);
   });
   return d;

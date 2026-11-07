@@ -1,8 +1,8 @@
 // Service worker: aplicația merge și fără net după prima deschidere (citirea cu modelul cere net).
 // Fișierele proprii: rețea întâi, cache ca rezervă (deci o versiune nouă ajunge la prima deschidere cu net).
 // pdf.js de pe cdnjs: cache întâi (e fixat pe versiune).
-const CACHE = 'pray-names-v20';
-const PROPRII = ['./', './index.html', './style.css', './app.js', './ocr.js', './reguli.js', './nume.js', './nume-date.js', './lexic.js', './istoric.js', './foaie.js', './manifest.webmanifest',
+const CACHE = 'pray-names-v21';
+const PROPRII = ['./', './index.html', './style.css', './app.js', './ocr.js', './reguli.js', './nume.js', './nume-date.js', './lexic.js', './invatat.js', './istoric.js', './foaie.js', './manifest.webmanifest',
   './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png'];
 const CDN = ['https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs', 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs',
   'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js'];

@@ -82,6 +82,15 @@ button:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
 .nume-rand input.nesigur { background: var(--galben); }
 .nume-rand .orig { font-size: 12px; color: var(--text-2); min-width: 90px; }
 .nume-rand button { padding: 3px 10px; }
+.nume-rand .chip { padding: 2px 10px; border-radius: 999px; font-size: 13px; margin: 0 2px; }
+.nume-rand .ok-rand { padding: 3px 12px; font-weight: 700; color: var(--verde); }
+.nume-rand .orig i { color: var(--verde); font-style: normal; }
+.bara-corectura { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; position: sticky; top: 0; z-index: 5; }
+.bara-corectura p { flex: 1 1 100%; margin: 0; }
+.accepta-pagina { margin: 4px 0 8px; }
+#verificare.doar-galbene .pagina-verif.fara-galben { display: none; }
+#verificare.doar-galbene .nume-rand:not(.galben-rand) { display: none; }
+@media print { .bara-corectura { display: none !important; } }
 mark.nesigur { background: var(--galben); border-radius: 4px; padding: 0 3px; }
 .obs { font-size: 13px; color: var(--text-2); margin-top: 8px; }
 .scos { font-size: 12.5px; color: var(--text-2); margin: 6px 0 4px; padding: 4px 8px; border-left: 3px solid var(--text-2); opacity: .9; }

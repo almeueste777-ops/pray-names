@@ -1,6 +1,12 @@
 // Istoricul versiunilor: se arată la ↻ Actualizări → „Ce s-a schimbat". Cea mai nouă e prima.
 // `versiune` = numărul din sw.js (CACHE = 'pray-names-vNN'); la fiecare publicare cresc ambele și adaug aici ce s-a schimbat, pe înțelesul ei.
 const ISTORIC = [
+  { versiune: 21, data: '8.11.2026', puncte: [
+    'Corectură mai rapidă la pasul 2: sus ai „N rânduri de verificat", butonul „Următorul de verificat" și opțiunea „arată doar ce e de verificat" (restul paginii dispare).',
+    'La un rând galben: Enter sau ✓ înseamnă „e bine așa" și cursorul sare la următorul galben. Un nume din „poate: …" se alege cu un click.',
+    'Aplicația ÎNVAȚĂ din corecturile tale: ce ai corectat sau confirmat o dată nu mai apare galben data viitoare (la pagini noi și la „Aplică regulile noi"). „Uită ce am învățat" șterge memoria.',
+    'Pe fiecare pagină: „Acceptă galbenele (N)" dintr-un click (rândurile cu „poate: …" rămân, le alegi tu).',
+  ] },
   { versiune: 20, data: '7.11.2026', puncte: [
     'Regulile noi se aplică acum și pe paginile DEJA citite: la pasul 2, caseta „Regulile noi pe paginile deja citite" → „Aplică regulile noi". Paginile pe care le-ai corectat de mână nu se ating; „Anulează" readuce starea de dinainte.',
     'De acum răspunsul modelului se păstrează pe pagină, deci regulile viitoare se pot reaplica oricând fără să mai citești pagina din nou.',

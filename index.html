@@ -62,6 +62,13 @@
     <div class="rand-actiuni"><button type="button" id="btn-reaplica" class="principal">↻ Aplică regulile noi</button><button type="button" id="btn-reaplica-toate" class="secundar">…pe toate</button><button type="button" id="btn-anuleaza-reaplica" class="secundar">Anulează</button></div>
     <p id="reaplica-stare" class="mic"></p>
   </div>
+  <div class="card subtire bara-corectura" id="bara-corectura">
+    <b id="ct-galbene" aria-live="polite"></b>
+    <button type="button" id="btn-urmator" class="principal" title="Mută cursorul pe următorul rând galben. Enter în căsuță face la fel.">▸ Următorul de verificat</button>
+    <label><input type="checkbox" id="doar-galbene"> arată doar ce e de verificat</label>
+    <span class="mic" id="ct-invatat"></span> <button type="button" id="btn-uita-invatat" class="secundar">Uită ce am învățat</button>
+    <p class="mic">Rândurile galbene: <b>Enter</b> sau ✓ = „e bine așa" și trece la următorul; un nume din „poate: …" se alege cu un click. Ce confirmi sau corectezi aici se ține minte: aceeași greșeală de citire nu mai apare galbenă data viitoare.</p>
+  </div>
   <div id="verificare"></div>
 </section>
 
@@ -132,6 +139,7 @@
 <script src="nume-date.js"></script>
 <script src="nume.js"></script>
 <script src="lexic.js"></script>
+<script src="invatat.js"></script>
 <script src="reguli.js"></script>
 <script src="ocr.js"></script>
 <script src="istoric.js"></script>
