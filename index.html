@@ -26,6 +26,7 @@
     <button data-pas="2"><span class="nr">2</span>Verifică</button>
     <button data-pas="3"><span class="nr">3</span>Tipărește</button>
   </nav>
+  <button id="btn-actualizari" class="rotita" title="Actualizează aplicația · ce s-a schimbat" aria-label="Actualizări"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.9-3M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.9 3M20 20v-4h-4"/></svg></button>
   <button id="btn-setari" class="rotita" title="Setări" aria-label="Setări"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
 </header>
 
@@ -108,6 +109,18 @@
   </form>
 </dialog>
 
+<dialog id="actualizari">
+  <form method="dialog">
+    <h2>Actualizări</h2>
+    <p id="act-versiune" class="mic"></p>
+    <div class="rand-actiuni"><button type="button" id="btn-actualizeaza" class="principal">↻ Actualizează aplicația</button></div>
+    <p id="act-stare" class="mic"></p>
+    <h3>Ce s-a schimbat</h3>
+    <div id="act-istoric" class="istoric"></div>
+    <div class="rand-actiuni"><button value="ok" class="secundar">Închide</button></div>
+  </form>
+</dialog>
+
 <dialog id="lupa"><img id="lupa-img" alt=""><form method="dialog"><button class="secundar">Închide</button></form></dialog>
 
 <script src="nume-date.js"></script>
@@ -115,6 +128,7 @@
 <script src="lexic.js"></script>
 <script src="reguli.js"></script>
 <script src="ocr.js"></script>
+<script src="istoric.js"></script>
 <script src="foaie.js"></script>
 <script type="module" src="app.js"></script>
 </body>

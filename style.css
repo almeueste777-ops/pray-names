@@ -85,6 +85,9 @@ button:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
 mark.nesigur { background: var(--galben); border-radius: 4px; padding: 0 3px; }
 .obs { font-size: 13px; color: var(--text-2); margin-top: 8px; }
 .scos { font-size: 12.5px; color: var(--text-2); margin: 6px 0 4px; padding: 4px 8px; border-left: 3px solid var(--text-2); opacity: .9; }
+.istoric { max-height: 42vh; overflow-y: auto; margin: 6px 0 10px; padding-right: 6px; }
+.ist-versiune { margin: 0 0 12px; }
+.ist-versiune ul { margin: 4px 0 0; padding-left: 20px; font-size: 13.5px; line-height: 1.45; color: var(--text-2); }
 .qr { display: flex; justify-content: center; margin: 10px 0; }
 .qr svg { width: min(260px, 70vw); height: auto; background: #fff; padding: 8px; border-radius: 12px; }
 #telefon-link { width: 100%; font-size: 12px; }

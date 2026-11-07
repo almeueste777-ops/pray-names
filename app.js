@@ -59,6 +59,45 @@ $('#setari').addEventListener('close', () => {
   setari.furnizor = $('#set-furnizor').value; setari.cheie = $('#set-cheie').value.trim(); setari.model = $('#set-model').value.trim();
   salveazaSetari(); actualizeazaButoane();
 });
+// ---------- actualizări + istoric (7.11.2026) ----------
+const FISIERE_APP = ['index.html', 'style.css', 'app.js', 'ocr.js', 'reguli.js', 'nume.js', 'nume-date.js', 'lexic.js', 'foaie.js', 'istoric.js', 'sw.js', 'manifest.webmanifest'];
+function versiuneaMea() { return (window.ISTORIC && ISTORIC[0] && ISTORIC[0].versiune) || null; }
+function deseneazaIstoric() {
+  const c = $('#act-istoric'); c.textContent = '';
+  for (const v of (window.ISTORIC || [])) {
+    const d = document.createElement('div'); d.className = 'ist-versiune';
+    const h = document.createElement('b'); h.textContent = (v.versiune ? `Versiunea ${v.versiune} · ` : '') + v.data; d.appendChild(h);
+    const ul = document.createElement('ul'); for (const p of v.puncte) { const li = document.createElement('li'); li.textContent = p; ul.appendChild(li); }
+    d.appendChild(ul); c.appendChild(d);
+  }
+}
+async function versiuneaDePeNet() {
+  const r = await fetch('sw.js?verifica=' + Date.now(), { cache: 'no-store' });
+  const m = (await r.text()).match(/pray-names-v(\d+)/);
+  return m ? +m[1] : null;
+}
+$('#btn-actualizari').onclick = async () => {
+  const st = $('#act-stare'), mea = versiuneaMea();
+  $('#act-versiune').textContent = mea ? `Ai versiunea ${mea}.` : '';
+  deseneazaIstoric(); st.textContent = 'Se verifică ce e nou…'; $('#actualizari').showModal();
+  try {
+    const nou = await versiuneaDePeNet();
+    st.textContent = nou && mea && nou > mea ? `Există versiunea ${nou}. Apasă „Actualizează aplicația".` : `Ai ultima versiune${mea ? ' (' + mea + ')' : ''}. Poți apăsa totuși butonul dacă ceva nu arată bine.`;
+  } catch { st.textContent = 'Nu pot verifica acum (fără internet?).'; }
+};
+$('#btn-actualizeaza').onclick = async () => {
+  const st = $('#act-stare'); st.textContent = 'Se descarcă ultima versiune…';
+  try {
+    // 1) fișierele se iau de pe net, ocolind memoria browserului; 2) se șterge memoria aplicației; 3) se reîncarcă.
+    //    Pomelnicele încărcate, pozele și setările (cheia) NU se ating.
+    await Promise.all(FISIERE_APP.map(f => fetch(f + '?v=' + Date.now(), { cache: 'reload' }).then(() => fetch(f, { cache: 'reload' }))));
+    if ('serviceWorker' in navigator) for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+    if (window.caches) for (const k of await caches.keys()) await caches.delete(k);
+    st.textContent = 'Gata, se reîncarcă…';
+    setTimeout(() => location.reload(), 400);
+  } catch (e) { st.textContent = 'Nu s-a putut actualiza (fără internet?). Încearcă din nou.'; }
+};
+
 // cheia pe telefon: cod QR + link de copiat
 function incarcaScript(src) {
   return new Promise((res, rej) => { if ([...document.scripts].some(s => s.src === src)) { res(); return; }

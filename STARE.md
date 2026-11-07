@@ -42,4 +42,5 @@
 - Nume vs altceva: `lexic.js` + `proceseazaLinii()` segmentat pe virgule; ce iese apare la pasul 2 ca „Scos din listă".
 - Cheia Gemini pe telefon: ⚙ Setări → „Pune cheia și pe telefon" (cod QR, `#cheie=` în link; cheia NU e în depozit). QR decodat cu jsQR: corect.
 - Teste: `node test/reguli.test.js` (278) + `node test/net-real.test.js` (35 de rânduri reale de pe net). Două runde de audit Opus; toate găsirile reparate (vezi JURNAL).
+- v19: buton ↻ Actualizări (sus): „Actualizează aplicația" (descarcă fișierele de pe net, șterge memoria aplicației, reîncarcă; lotul, pozele și cheia rămân) + „Ce s-a schimbat" din `istoric.js`. **La fiecare publicare: cresc `CACHE` în sw.js ȘI adaug versiunea în `istoric.js`.**
 - NEPROBAT: citirea reală cu Gemini a unei pagini cu 2 coloane + cuvinte ca „bolnavă" (cere cheia ei; promptul nou e netestat pe model). Dicționarul NU acoperă toate numele rare (necunoscut = galben, nu pierdut).

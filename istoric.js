@@ -1,0 +1,27 @@
+// Istoricul versiunilor: se arată la ↻ Actualizări → „Ce s-a schimbat". Cea mai nouă e prima.
+// `versiune` = numărul din sw.js (CACHE = 'pray-names-vNN'); la fiecare publicare cresc ambele și adaug aici ce s-a schimbat, pe înțelesul ei.
+const ISTORIC = [
+  { versiune: 19, data: '7.11.2026', puncte: [
+    'Buton nou ↻ Actualizări (sus, lângă ⚙): actualizează aplicația și arată ce s-a schimbat.',
+  ] },
+  { versiune: 18, data: '7.11.2026', puncte: [
+    'Dicționar mare de prenume românești (~1650, luate de pe net): verifică ce e nume, corectează greșelile de citire și hotărăște sexul pentru regula „două nume pe rând".',
+    'Abrevieri pe foaie: Părintele = Pr., Presbitera = Presb., Arhimandrit = Arhim., Arhiereu = Arh., Protosinghel = Protos., Constantin = Ctin, Gheorghe = Ghe. Scrise de mână în oricare formă, se înțeleg la citire.',
+    'Pomelnic pe două coloane: se scrie întâi toată prima coloană de sus în jos, apoi a doua, fără să se încurce.',
+    'Pe un rând se citesc cel mult 2 nume orizontal; al 3-lea, al 4-lea… coboară fiecare pe linia lui, în coloană. O persoană cu titlu (Pr., Monahia…) e luată singură.',
+    '„Bolnavă", „se roagă", „pentru sănătate", sume, vârste, luni nu mai sunt luate drept nume. La pasul 2 se vede ce s-a scos („Scos din listă").',
+    'Cheia Gemini și pe telefon: ⚙ Setări → „Pune cheia și pe telefon" (cod QR). Cheia nu e pusă nicăieri pe internet.',
+  ] },
+  { versiune: null, data: '4.11.2026', puncte: [
+    'Foaie-calendar pe 3 luni (luna tipăririi + 2), cu celule mari. Paginile încărcate dispar singure după 24 de ore. Miniaturi mici: merge repede și la 100 de pagini.',
+    'Rama și textul sunt retrase 2,5 mm de marginea colii, ca imprimanta HP să nu mai taie chenarul.',
+    '„+ nume", ✕ și „+ secțiune" nu mai fac pagina să sară la început.',
+    'Fiecare coală începe pe pagina ei la tipar: imaginea nu mai urcă în sus de la o coală la alta.',
+    'Cartonașe mereu portret; 4, 6 sau 8 pe coală; chenar, font și mărimea literei la alegere; cotă Gemini pe zi vizibilă.',
+  ] },
+  { versiune: null, data: '3.11.2026', puncte: [
+    'Prima versiune: pomelnice scrise de mână (PDF sau poze) → citite de Gemini → verificate de tine → foi A6, câte 4 pe o coală A4, cu categoria, numele și data.',
+  ] },
+];
+if (typeof window !== 'undefined') window.ISTORIC = ISTORIC;
+if (typeof module !== 'undefined') module.exports = ISTORIC;
