@@ -30,6 +30,24 @@ async function pozeGoleste() { try { const d = await db(); d.transaction(DB.maga
 function incarcaSetari() { try { return Object.assign({ furnizor: 'gemini', cheie: '', model: '', aspect: { ...FOAIE.IMPLICIT } }, JSON.parse(localStorage.getItem(CHEIE_SET) || '{}')); } catch { return { furnizor: 'gemini', cheie: '', model: '', aspect: { ...FOAIE.IMPLICIT } }; } }
 function salveazaSetari() { try { localStorage.setItem(CHEIE_SET, JSON.stringify(setari)); } catch {} }
 setari.aspect = Object.assign({ ...FOAIE.IMPLICIT }, setari.aspect || {});
+
+// ---------- cheia API pe telefon (7.11.2026) ----------
+// Cheia NU se pune în depozitul public (oricine ar putea să-ți consume cota). Se mută de pe un dispozitiv pe altul printr-un link
+// cu cheia după „#" (partea de după # nu pleacă niciodată către server): pe calculator apare ca cod QR, telefonul îl scanează,
+// aplicația se deschide, își ia cheia în setări și șterge „#…" din adresă.
+const ADRESA_APP = 'https://almeueste777-ops.github.io/pray-names/';
+const QR_LIB = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
+function linkCuCheie(cheie, furnizor) { return `${ADRESA_APP}#cheie=${encodeURIComponent(cheie)}&furnizor=${furnizor}`; }
+let cheiePrimita = false;
+(function preiaCheieDinLink() {
+  const m = location.hash.match(/^#cheie=([^&]+)(?:&furnizor=(gemini|claude))?/);
+  if (!m) return;
+  try {
+    const cheie = decodeURIComponent(m[1]).trim();
+    if (/^[\w.\-]{16,300}$/.test(cheie)) { setari.cheie = cheie; if (m[2]) setari.furnizor = m[2]; salveazaSetari(); cheiePrimita = true; }
+  } catch {}
+  history.replaceState(null, '', location.pathname + location.search);   // cheia dispare din bara de adresă și din istoric
+})();
 (function umpleModele() {
   const sel = $('#set-model');
   for (const m of OCR.MODELE_GEMINI) { const o = document.createElement('option'); o.value = m.id; o.textContent = `${m.nume}${m.peZi ? ` (${m.peZi} pagini/zi)` : ' (cotă necunoscută)'}`; sel.appendChild(o); }
@@ -41,6 +59,29 @@ $('#setari').addEventListener('close', () => {
   setari.furnizor = $('#set-furnizor').value; setari.cheie = $('#set-cheie').value.trim(); setari.model = $('#set-model').value.trim();
   salveazaSetari(); actualizeazaButoane();
 });
+// cheia pe telefon: cod QR + link de copiat
+function incarcaScript(src) {
+  return new Promise((res, rej) => { if ([...document.scripts].some(s => s.src === src)) { res(); return; }
+    const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('nu s-a putut încărca generatorul de cod QR (fără internet?)')); document.head.appendChild(s); });
+}
+$('#btn-telefon').onclick = async () => {
+  const cheie = $('#set-cheie').value.trim() || setari.cheie, furnizor = $('#set-furnizor').value || setari.furnizor;
+  const qr = $('#qr'), camp = $('#telefon-link');
+  qr.textContent = '';
+  if (!cheie) { qr.textContent = 'Întâi lipește cheia în căsuța „Cheia API” și apasă Salvează.'; camp.value = ''; $('#telefon').showModal(); return; }
+  const link = linkCuCheie(cheie, furnizor); camp.value = link;
+  $('#telefon').showModal();
+  try {
+    await incarcaScript(QR_LIB);
+    const q = window.qrcode(0, 'M'); q.addData(link); q.make();
+    qr.innerHTML = q.createSvgTag({ cellSize: 4, margin: 2, scalable: true });   // SVG generat de bibliotecă din date numerice, fără text de la utilizator
+  } catch (e) { qr.textContent = e.message + ' Folosește linkul de mai jos.'; }
+};
+$('#btn-copiaza-link').onclick = async () => {
+  const camp = $('#telefon-link'); camp.select();
+  try { await navigator.clipboard.writeText(camp.value); $('#btn-copiaza-link').textContent = 'Copiat ✓'; } catch { document.execCommand && document.execCommand('copy'); }
+};
+$('#telefon').addEventListener('close', () => { $('#qr').textContent = ''; $('#telefon-link').value = ''; $('#btn-copiaza-link').textContent = 'Copiază linkul'; });   // cheia nu rămâne în pagină
 // aspectul foii (pasul 3)
 for (const [id, cheie] of [['#asp-font', 'font'], ['#asp-chenar', 'chenar'], ['#asp-culoare', 'culoare'], ['#asp-pe-coala', 'peCoala']]) {
   const el = $(id); el.value = setari.aspect[cheie];
@@ -220,7 +261,7 @@ function aplicaCitirea(p, r) {
   p.dataAlta = (r.alte_date && r.alte_date.length) ? r.alte_date.join(', ') : null;   // se arată ca sugestie
   p.data = REGULI.parseazaData(p.dataText) || null;
   p.observatii = r.observatii || '';
-  p.sectiuni = (r.sectiuni || []).flatMap(s => REGULI.proceseazaSectiuni(s)).filter(s => s.nume.length);
+  p.sectiuni = (r.sectiuni || []).flatMap(s => REGULI.proceseazaSectiuni(s)).filter(s => s.nume.length || (s.scos && s.scos.length));   // o secțiune doar cu „scos" rămâne vizibilă la pasul 2
   if (p.sectiuni.length && /\bcu\s+(fii|copii|nepo|toat[ăa]\s+casa)/i.test(p.observatii)) p.sectiuni[0].casa = true;
   if (!p.sectiuni.length) p.sectiuni = [{ categorie: 'vii', nume: [], casa: false }];
 }
@@ -276,7 +317,7 @@ function sectiuneUI(p, s, k) {
       <label><input type="checkbox" data-camp="casa"> „cu toată casa lor"</label>
       <button class="secundar" data-camp="adauga">+ nume</button>
       ${p.sectiuni.length > 1 ? '<button class="secundar" data-camp="sterge-sectiune">✕ secțiunea</button>' : ''}
-    </div><div class="nume-lista"></div>`;
+    </div>${s.scos && s.scos.length ? `<div class="scos" title="cuvinte care nu sunt nume: nu se tipăresc">Scos din listă (nu sunt nume): <b>${s.scos.map(esc).join(' · ')}</b></div>` : ''}<div class="nume-lista"></div>`;
   d.querySelector('[data-camp=categorie]').value = s.categorie;
   d.querySelector('[data-camp=categorie]').onchange = e => { s.categorie = e.target.value; salveazaLot(); };
   d.querySelector('[data-camp=casa]').checked = !!s.casa;
@@ -294,7 +335,7 @@ function sectiuneUI(p, s, k) {
     const r = document.createElement('div'); r.className = 'nume-rand';
     const nesigur = !n.sigur || n.corectat;
     r.innerHTML = `<span class="mic">${j + 1}.</span><input type="text" class="${nesigur ? 'nesigur' : ''}" value="${esc(n.nume)}">
-      <span class="orig" title="cum a citit modelul">${nesigur && n.original ? '„' + esc(n.original) + '"' : ''}</span>
+      <span class="orig" title="cum a citit modelul">${nesigur && n.original ? '„' + esc(n.original) + '"' : ''}${n.sugestii && n.sugestii.length ? ' poate: ' + n.sugestii.map(esc).join(' / ') : ''}${n.dinRand ? ' (de pe același rând)' : ''}</span>
       <label class="mic" title="cu tot neamul lui cel adormit"><input type="checkbox" data-camp="ctna"> ctna</label><button class="secundar" title="șterge">✕</button>`;
     const inp = r.querySelector('input[type=text]');
     inp.onchange = () => { n.nume = inp.value.trim(); n.sigur = true; n.corectat = false; inp.classList.remove('nesigur'); salveazaLot(); };
@@ -395,6 +436,7 @@ async function incarcaProba() {
 (async () => {
   if (!(await incarcaProba())) await incarcaLot();
   deseneazaMiniaturi(); actualizeazaButoane();
+  if (cheiePrimita) $('#progres').textContent = '✓ Cheia API a fost pusă pe acest dispozitiv. O poți schimba din ⚙ Setări.';
   setInterval(() => { if (curataVechi()) { deseneazaMiniaturi(); actualizeazaButoane(); } }, 60000);
   if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
 })();

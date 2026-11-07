@@ -84,6 +84,10 @@ button:disabled { opacity: .4; cursor: not-allowed; box-shadow: none; }
 .nume-rand button { padding: 3px 10px; }
 mark.nesigur { background: var(--galben); border-radius: 4px; padding: 0 3px; }
 .obs { font-size: 13px; color: var(--text-2); margin-top: 8px; }
+.scos { font-size: 12.5px; color: var(--text-2); margin: 6px 0 4px; padding: 4px 8px; border-left: 3px solid var(--text-2); opacity: .9; }
+.qr { display: flex; justify-content: center; margin: 10px 0; }
+.qr svg { width: min(260px, 70vw); height: auto; background: #fff; padding: 8px; border-radius: 12px; }
+#telefon-link { width: 100%; font-size: 12px; }
 .eroare { color: var(--rosu); }
 select, input[type=text], input[type=password], input[type=number] { font: 500 16px var(--ui); padding: 9px 12px; min-height: 44px; max-width: 100%; border: 1px solid var(--linie); border-radius: 12px; background: var(--sticla-tare); color: var(--text); }
 input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--gold); }

@@ -33,3 +33,13 @@
 - Interfață adaptabilă la orice ecran (telefon 320+, peisaj, tabletă, monitor), probată prin CDP la 5 mărimi (4.11.2026).
 
 - Calendar pe 3 luni (luna tipăririi + 2); paginile expiră după 24 h; miniaturi mici + poza mare la nevoie (4.11.2026, seara).
+
+## 7.11.2026 – cele 5 cerințe + cheia pe telefon (v18)
+- Dicționar: `nume-date.js` (~1570 prenume, generat de `tools/construieste-nume.py` din 6 surse de pe net, vezi `SURSE-NUME.md`) + EXTRA în `nume.js` (nume din calendar/monahale). Era ~500.
+- Abrevieri pe foaie: Pr., Presb., Arhim., Arh., Protos., Ctin, Ghe; la citire ambele forme (`TITLURI`, `NUME_SCURT`, `ALIASE` în reguli.js; `scurteaza()`).
+- Coloane: promptul cere `coloana` per rând; `ordoneazaLinii()` pune coloana 1 întreagă, apoi 2 (acceptă 0-based, „dreapta", „2").
+- Max 2 nume orizontal (`MAX_ORIZONTAL`), restul pe linii separate; o persoană cu titlu e luată singură.
+- Nume vs altceva: `lexic.js` + `proceseazaLinii()` segmentat pe virgule; ce iese apare la pasul 2 ca „Scos din listă".
+- Cheia Gemini pe telefon: ⚙ Setări → „Pune cheia și pe telefon" (cod QR, `#cheie=` în link; cheia NU e în depozit). QR decodat cu jsQR: corect.
+- Teste: `node test/reguli.test.js` (278) + `node test/net-real.test.js` (35 de rânduri reale de pe net). Două runde de audit Opus; toate găsirile reparate (vezi JURNAL).
+- NEPROBAT: citirea reală cu Gemini a unei pagini cu 2 coloane + cuvinte ca „bolnavă" (cere cheia ei; promptul nou e netestat pe model). Dicționarul NU acoperă toate numele rare (necunoscut = galben, nu pierdut).

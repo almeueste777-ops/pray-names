@@ -89,14 +89,30 @@
     </label>
     <label>Cheia API <input type="password" id="set-cheie" autocomplete="off" placeholder="lipește cheia aici"></label>
     <label>Modelul <select id="set-model"><option value="">automat: Lite (500 pagini/zi), apoi celelalte</option></select></label>
-    <p class="mic">Cheia rămâne doar în acest browser. Pozele pleacă la furnizorul ales ca să fie citite. Cota Gemini se numără pe model și se reface zilnic la 10:00, ora României.</p>
+    <p class="mic">Cheia rămâne doar în browserul tău (nu e în depozitul public). Pozele pleacă la furnizorul ales ca să fie citite. Cota Gemini se numără pe model și se reface zilnic la 10:00, ora României.</p>
+    <div class="rand-actiuni"><button type="button" id="btn-telefon" class="secundar">📱 Pune cheia și pe telefon</button></div>
     <div class="rand-actiuni"><button value="ok" class="principal">Salvează</button><button value="cancel" class="secundar">Renunță</button></div>
+  </form>
+</dialog>
+
+<dialog id="telefon">
+  <form method="dialog">
+    <h2>Cheia pe telefon</h2>
+    <p class="mic" id="telefon-text">Deschide camera telefonului, îndreapt-o spre codul de mai jos și apasă linkul care apare. Aplicația se deschide cu cheia deja pusă și o ține minte pe telefon.</p>
+    <div id="qr" class="qr" aria-label="cod QR cu linkul spre aplicație, cu cheia în el"></div>
+    <label>Sau trimite-ți linkul (la tine pe mail / WhatsApp)
+      <input type="text" id="telefon-link" readonly>
+    </label>
+    <p class="mic">Linkul conține cheia ta: nu-l da altcuiva și nu-l pune pe internet. Cheia stă în partea de după „#", care nu pleacă niciodată pe net către vreun server.</p>
+    <div class="rand-actiuni"><button type="button" id="btn-copiaza-link" class="secundar">Copiază linkul</button><button value="ok" class="principal">Gata</button></div>
   </form>
 </dialog>
 
 <dialog id="lupa"><img id="lupa-img" alt=""><form method="dialog"><button class="secundar">Închide</button></form></dialog>
 
+<script src="nume-date.js"></script>
 <script src="nume.js"></script>
+<script src="lexic.js"></script>
 <script src="reguli.js"></script>
 <script src="ocr.js"></script>
 <script src="foaie.js"></script>

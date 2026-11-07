@@ -9,7 +9,7 @@ Transcrie ce e scris, cât mai fidel, și răspunde NUMAI cu JSON de forma:
     {"titlu": "titlul scris deasupra listei (ex. Vii, Adormiți, Morții, Acatist, Sf. Liturghie) sau \\"\\" dacă nu există",
      "categorie": "vii" | "adormiti" | "necunoscut",
      "cruce": true dacă lângă titlu e desenată o cruce (+ sau †), altfel false,
-     "linii": [{"text": "un rând de nume exact cum e scris, cu cratime, titluri (Pr., monahia) și completări precum 'cu tot neamul lui cel adormit' sau 'cu fii'; dacă rândul începe cu o cruce desenată, pune '+ ' în față", "sigur": true|false}]}
+     "linii": [{"text": "un rând de nume exact cum e scris, cu cratime, titluri (Pr., monahia) și completări precum 'cu tot neamul lui cel adormit' sau 'cu fii'; dacă rândul începe cu o cruce desenată, pune '+ ' în față", "coloana": 1, "sigur": true|false}]}
   ],
   "data_albastra": "data scrisă cu pix ALBASTRU, de obicei în dreapta sus, exact cum e scrisă (ex. '20 oct', '15 nov', '4.10') sau null dacă nu există nimic scris cu albastru",
   "alte_date": ["alte date de pe foaie, scrise cu alt pix"],
@@ -19,6 +19,10 @@ Reguli:
 - O foaie poate avea mai multe secțiuni (de ex. întâi Vii, apoi Morții). Fiecare listă sub un titlu e o secțiune. Dacă nu e niciun titlu, o singură secțiune cu titlu "".
 - categorie: "adormiti" pentru Adormiți/Morți/cruce; "vii" pentru Vii/Acatist/Liturghie sau fără titlu; "necunoscut" doar dacă nu poți hotărî.
 - În "linii" pun DOAR rândurile cu nume de persoane, câte un rând scris de mână = un element. Sumele, datele, rugămințile, numele mănăstirii tipărit pe antet NU intră în linii.
+- COLOANE: dacă lista are DOUĂ (sau mai multe) coloane de nume, fiecare rând primește în "coloana" numărul coloanei (1 = cea din stânga, 2 = următoarea). Dai rândurile în ordinea de citire: ÎNTÂI toată coloana 1 de sus până jos, ABIA APOI toată coloana 2 de sus până jos. Un nume din coloana 1 și unul din coloana 2 aflate la aceeași înălțime NU se pun pe același rând și nu se amestecă. Dacă lista are o singură coloană, "coloana" este 1 la toate rândurile.
+- Într-un rând pot fi scrise unul lângă altul (orizontal) mai multe nume: transcrie rândul întreg exact cum e scris, pe un singur element; aplicația le așază apoi pe verticală.
+- Cuvintele care nu sunt nume (bolnavă, bolnav, se roagă, pentru sănătate, mulțumire, vârste, sume) nu sunt nume de persoane. Dacă stau singure pe un rând, pune-le în "observatii", nu în "linii". Dacă stau pe același rând cu un nume, lasă rândul întreg în "linii": aplicația le separă singură.
+- Prescurtările scrise de mână le copiezi exact, fără să le dezvolți: Pr., Părintele, Ctin, Ghe, Presb., Arhim., Arh., Protos.
 - Numele sunt prenume românești (Ioan, Maria, Gheorghe, Elena...). Dacă un nume e greu de citit, scrie varianta cea mai probabilă și pune "sigur": false.
 - Scrie numele cu Prima-Literă-Mare și cu diacritice românești corecte (ș, ț, ă, â, î), chiar dacă pe foaie sunt cu majuscule.
 - Nu inventa nume care nu sunt pe foaie. Nu omite rânduri.`;
